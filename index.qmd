@@ -1,0 +1,26 @@
+---
+title: "Cecilia Chen"
+# image: profile.jpg   # 等你放进头像照片后，把这行前面的 # 删掉即可启用
+about:
+  template: trestles
+  image-shape: round
+  image-width: 14em
+links:
+  - icon: envelope
+    text: Email
+    href: mailto:csx.sixixhen@gmail.com
+  - icon: github
+    text: GitHub
+    href: https://github.com/chen-cecilia
+  - icon: mortarboard
+    text: Google Scholar
+    href: https://scholar.google.com/citations?user=XXXX
+---
+
+I am a graduate student in the Social Data Analytics program at the University of Texas at Dallas. Before that I worked in advertising, where I learned to argue with data, and I now create feminist media as an independent content creator (@鸡爪抓). My research asks how data—and the decisions behind it—shape who gets heard on digital platforms.
+
+## Research Interests
+
+- Gender inequality embedded in digital platforms and social systems
+- Platform content moderation and algorithmic bias
+- The data-generating processes behind platform metrics and official statistics

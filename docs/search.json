@@ -1,0 +1,51 @@
+[
+  {
+    "objectID": "cv.html",
+    "href": "cv.html",
+    "title": "CV",
+    "section": "",
+    "text": "Download PDF"
+  },
+  {
+    "objectID": "research.html",
+    "href": "research.html",
+    "title": "Research",
+    "section": "",
+    "text": "Platform Governance of Feminist Content: A Data Journal of My Own Media Independent data project, 2024–present\n\nUsing engagement data I collected from my own content across Douyin, Bilibili, Xiaohongshu, and WeChat Channels, this project examines whether platforms systematically limit the reach of feminist media. It combines quantitative tracking of views, interactions, and follower growth with documented moderation events to investigate algorithmic bias in content governance.\n\nData-generating process. These data come from my own records of every post I published across four Chinese platforms between 2024 and 2026 — each post’s views, interactions, and follower change, alongside moderation events like reach-limiting and account suspension. The key decisions were which platforms and time windows to track and how to flag incidents such as a video that stopped being promoted after 200,000 views and was followed by a 7-day suspension, which shape what the data can reveal about platform behavior."
+  },
+  {
+    "objectID": "research.html#working-papers",
+    "href": "research.html#working-papers",
+    "title": "Research",
+    "section": "",
+    "text": "Platform Governance of Feminist Content: A Data Journal of My Own Media Independent data project, 2024–present\n\nUsing engagement data I collected from my own content across Douyin, Bilibili, Xiaohongshu, and WeChat Channels, this project examines whether platforms systematically limit the reach of feminist media. It combines quantitative tracking of views, interactions, and follower growth with documented moderation events to investigate algorithmic bias in content governance.\n\nData-generating process. These data come from my own records of every post I published across four Chinese platforms between 2024 and 2026 — each post’s views, interactions, and follower change, alongside moderation events like reach-limiting and account suspension. The key decisions were which platforms and time windows to track and how to flag incidents such as a video that stopped being promoted after 200,000 views and was followed by a 7-day suspension, which shape what the data can reveal about platform behavior."
+  },
+  {
+    "objectID": "teaching.html",
+    "href": "teaching.html",
+    "title": "Teaching",
+    "section": "",
+    "text": "Teaching experience will be added here as it develops. I am currently a new graduate student in Social Data Analytics at UT Dallas."
+  },
+  {
+    "objectID": "teaching.html#teaching",
+    "href": "teaching.html#teaching",
+    "title": "Teaching",
+    "section": "",
+    "text": "Teaching experience will be added here as it develops. I am currently a new graduate student in Social Data Analytics at UT Dallas."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Cecilia Chen",
+    "section": "",
+    "text": "I am a graduate student in the Social Data Analytics program at the University of Texas at Dallas. Before that I worked in advertising, where I learned to argue with data, and I now create feminist media as an independent content creator (@鸡爪抓). My research asks how data—and the decisions behind it—shape who gets heard on digital platforms."
+  },
+  {
+    "objectID": "index.html#research-interests",
+    "href": "index.html#research-interests",
+    "title": "Cecilia Chen",
+    "section": "Research Interests",
+    "text": "Research Interests\n\nGender inequality embedded in digital platforms and social systems\nPlatform content moderation and algorithmic bias\nThe data-generating processes behind platform metrics and official statistics"
+  }
+]

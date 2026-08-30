@@ -1,0 +1,26 @@
+project:
+  type: website
+  output-dir: docs
+website:
+  title: "Cecilia Chen"
+  description: "PhD student in Public Policy and Political Economy — research on personal AI, information power, and individual autonomy."
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: research.qmd
+        text: Research
+      - href: teaching.qmd
+        text: Teaching
+      - href: cv.qmd
+        text: CV
+    right:
+      - icon: github
+        href: https://github.com/chen-cecilia
+      - icon: envelope
+        href: mailto:dal801123@utdallas.edu
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true

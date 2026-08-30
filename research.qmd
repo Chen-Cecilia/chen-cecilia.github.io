@@ -1,0 +1,11 @@
+---
+title: "Research"
+---
+
+## Working Papers
+
+**Platform Governance of Feminist Content: A Data Journal of My Own Media** *Independent data project, 2024–present*
+
+> Using engagement data I collected from my own content across Douyin, Bilibili, Xiaohongshu, and WeChat Channels, this project examines whether platforms systematically limit the reach of feminist media. It combines quantitative tracking of views, interactions, and follower growth with documented moderation events to investigate algorithmic bias in content governance.
+
+**Data-generating process.** These data come from my own records of every post I published across four Chinese platforms between 2024 and 2026 — each post's views, interactions, and follower change, alongside moderation events like reach-limiting and account suspension. The key decisions were which platforms and time windows to track and how to flag incidents such as a video that stopped being promoted after 200,000 views and was followed by a 7-day suspension, which shape what the data can reveal about platform behavior.
