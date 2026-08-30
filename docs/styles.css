@@ -1,1 +1,4 @@
-/* css styles */
+.about-entity img[src*="profile.jpg"] {
+  object-fit: cover !important;
+  object-position: 50% 15% !important;
+}

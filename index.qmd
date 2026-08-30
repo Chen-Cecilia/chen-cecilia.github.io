@@ -1,6 +1,6 @@
 ---
 title: "Cecilia Chen"
-# image: profile.jpg   # 等你放进头像照片后，把这行前面的 # 删掉即可启用
+image: profile.jpg
 about:
   template: trestles
   image-shape: round
