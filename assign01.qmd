@@ -13,3 +13,23 @@ I also began to see why Quarto and RStudio are useful beyond building a personal
 For the visual design, I retained the cosmo theme from the starter template because it is simple, readable, and appropriate for an academic website. I kept the amount of custom CSS limited because my priority at this stage is clarity and structure rather than complex visual design. I organized the navigation around Home, Research, Assignments, and CV so that the site can continue to grow as I complete coursework and develop research projects.
 
 AI tools were part of this learning process. I used YouMind during the initial workshop to interpret instructions, guide technical steps, troubleshoot problems, and help draft or revise content. Later, I used ChatGPT as a second-stage reviewer to compare the website with the assignment requirements, identify placeholder or inaccurate content, and help revise the final version. Through this process, I also learned that AI-generated content needs to be checked carefully, especially when it makes assumptions about personal experience or research activities.
+
+## Generative AI Use Disclosure
+
+### Tools Used
+
+**YouMind — Auto mode.**  
+I used YouMind during the initial website workshop and subsequent website development. I used its Auto mode and therefore do not know which underlying language model was selected for each interaction.
+
+**ChatGPT — subscription version.**  
+I used ChatGPT during website development and final review.
+
+### How AI Was Used
+
+I used AI to interpret course and assignment instructions, break the task into smaller steps, explain unfamiliar concepts, troubleshoot technical problems, and assist with drafting and revising English text based on information and ideas I provided. I also used AI to review the completed website against the assignment requirements.
+
+The initial website structure was based on the starter files and workflow provided in the course workshop handout. AI was used to help me understand, implement, customize, and revise that structure rather than to replace the course materials.
+
+### Why AI Was Used
+
+I had no prior experience with RStudio, Quarto, or GitHub Pages when I began this work. I used AI as a learning scaffold to navigate an unfamiliar technical workflow, clarify concepts, troubleshoot problems, and improve my English expression. I checked the final website against my own experience, the course materials, and the assignment requirements.
