@@ -1,24 +1,31 @@
 [
   {
-    "objectID": "cv.html",
-    "href": "cv.html",
-    "title": "CV",
+    "objectID": "assign2.html",
+    "href": "assign2.html",
+    "title": "Assignment 2",
     "section": "",
-    "text": "Download PDF"
+    "text": "Placeholder for Assignment 2."
+  },
+  {
+    "objectID": "assign01.html",
+    "href": "assign01.html",
+    "title": "Assignment 1: Website Design Note",
+    "section": "",
+    "text": "This website was built with RStudio and Quarto and is published through GitHub Pages. The initial structure came from the course workshop handout, which provided starter files and introduced the workflow from Quarto source files to a published website. The handout describes the process as two connected steps: building the site locally in RStudio and Quarto, then publishing the rendered docs/ folder through GitHub Pages.\nWhen I first completed the workshop, I had no previous experience with RStudio, Quarto, or GitHub Pages. I uploaded the workshop materials to YouMind and used it to help me interpret the instructions and work through the setup step by step. At that stage, much of my work was mechanical. I followed the starter structure, copied and modified code, and focused mainly on making the website work. I could produce a working page before I fully understood why the different files were needed.\nWhile revisiting the site for Assignment 1, I began to understand the underlying workflow more clearly. I learned that each .qmd file functions as a source document for an individual page, while _quarto.yml organizes the website as a whole, including navigation and formatting. Running quarto render converts the source material into HTML files in the docs/ folder, which GitHub Pages then serves as the public website. This helped me understand the difference between the source files I edit and the final website that users see.\nI also began to see why Quarto and RStudio are useful beyond building a personal website. The same workflow can combine narrative text, code, data analysis, and visualizations in one reproducible document. This changed how I understood the purpose of the assignment. The website is not only a place to display my CV or research interests; it is also an introduction to a workflow that can later support research reports, data analysis, and academic projects.\nFor the visual design, I retained the cosmo theme from the starter template because it is simple, readable, and appropriate for an academic website. I kept the amount of custom CSS limited because my priority at this stage is clarity and structure rather than complex visual design. I organized the navigation around Home, Research, Assignments, and CV so that the site can continue to grow as I complete coursework and develop research projects.\nAI tools were part of this learning process. I used YouMind during the initial workshop to interpret instructions, guide technical steps, troubleshoot problems, and help draft or revise content. Later, I used ChatGPT as a second-stage reviewer to compare the website with the assignment requirements, identify placeholder or inaccurate content, and help revise the final version. Through this process, I also learned that AI-generated content needs to be checked carefully, especially when it makes assumptions about personal experience or research activities."
   },
   {
     "objectID": "research.html",
     "href": "research.html",
     "title": "Research",
     "section": "",
-    "text": "Platform Governance of Feminist Content: A Data Journal of My Own Media Independent data project, 2024–present\n\nUsing engagement data I collected from my own content across Douyin, Bilibili, Xiaohongshu, and WeChat Channels, this project examines whether platforms systematically limit the reach of feminist media. It combines quantitative tracking of views, interactions, and follower growth with documented moderation events to investigate algorithmic bias in content governance.\n\nData-generating process. These data come from my own records of every post I published across four Chinese platforms between 2024 and 2026 — each post’s views, interactions, and follower change, alongside moderation events like reach-limiting and account suspension. The key decisions were which platforms and time windows to track and how to flag incidents such as a video that stopped being promoted after 200,000 views and was followed by a 7-day suspension, which shape what the data can reveal about platform behavior."
+    "text": "I am interested in how digital platforms shape the visibility of feminist content. One project I would like to develop examines how platform metrics, recommendation systems, and moderation practices affect the circulation of gender-related content on Chinese social media.\nData-generating process. A possible dataset for this project could combine records from my own content creation experience with publicly visible engagement metrics and documented moderation notices from platforms such as Douyin, Bilibili, and Xiaohongshu. An important part of the research design would be to consider how platform interfaces, recommendation systems, and my own decisions about what to post shape the data that become observable."
   },
   {
-    "objectID": "research.html#working-papers",
-    "href": "research.html#working-papers",
+    "objectID": "research.html#research-interests",
+    "href": "research.html#research-interests",
     "title": "Research",
     "section": "",
-    "text": "Platform Governance of Feminist Content: A Data Journal of My Own Media Independent data project, 2024–present\n\nUsing engagement data I collected from my own content across Douyin, Bilibili, Xiaohongshu, and WeChat Channels, this project examines whether platforms systematically limit the reach of feminist media. It combines quantitative tracking of views, interactions, and follower growth with documented moderation events to investigate algorithmic bias in content governance.\n\nData-generating process. These data come from my own records of every post I published across four Chinese platforms between 2024 and 2026 — each post’s views, interactions, and follower change, alongside moderation events like reach-limiting and account suspension. The key decisions were which platforms and time windows to track and how to flag incidents such as a video that stopped being promoted after 200,000 views and was followed by a 7-day suspension, which shape what the data can reveal about platform behavior."
+    "text": "I am interested in how digital platforms shape the visibility of feminist content. One project I would like to develop examines how platform metrics, recommendation systems, and moderation practices affect the circulation of gender-related content on Chinese social media.\nData-generating process. A possible dataset for this project could combine records from my own content creation experience with publicly visible engagement metrics and documented moderation notices from platforms such as Douyin, Bilibili, and Xiaohongshu. An important part of the research design would be to consider how platform interfaces, recommendation systems, and my own decisions about what to post shape the data that become observable."
   },
   {
     "objectID": "teaching.html",
@@ -39,13 +46,20 @@
     "href": "index.html",
     "title": "Cecilia Chen",
     "section": "",
-    "text": "I am a graduate student in the Social Data Analytics program at the University of Texas at Dallas. Before that I worked in advertising, where I learned to argue with data, and I now create feminist media as an independent content creator (@鸡爪抓). My research asks how data—and the decisions behind it—shape who gets heard on digital platforms."
+    "text": "I am a master’s student in Social Data Analytics and Research at UT Dallas. Before that I worked in advertising and also created online content about gender issues. I am interested in digital platforms, algorithms, information behavior, and gender inequality in online spaces."
   },
   {
     "objectID": "index.html#research-interests",
     "href": "index.html#research-interests",
     "title": "Cecilia Chen",
     "section": "Research Interests",
-    "text": "Research Interests\n\nGender inequality embedded in digital platforms and social systems\nPlatform content moderation and algorithmic bias\nThe data-generating processes behind platform metrics and official statistics"
+    "text": "Research Interests\n\nDigital platforms and algorithmic governance\n\nInformation behavior and content visibility\n\nGender inequality in digital spaces\n\nData-generating processes behind platform metrics"
+  },
+  {
+    "objectID": "cv.html",
+    "href": "cv.html",
+    "title": "CV",
+    "section": "",
+    "text": "Download PDF"
   }
 ]

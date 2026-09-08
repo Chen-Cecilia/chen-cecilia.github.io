@@ -8,19 +8,17 @@ about:
 links:
   - icon: envelope
     text: Email
-    href: mailto:csx.sixixhen@gmail.com
+    href: mailto:csx.sixichen@gmail.com
   - icon: github
     text: GitHub
     href: https://github.com/chen-cecilia
-  - icon: mortarboard
-    text: Google Scholar
-    href: https://scholar.google.com/citations?user=XXXX
 ---
 
-I am a graduate student in the Social Data Analytics program at the University of Texas at Dallas. Before that I worked in advertising, where I learned to argue with data, and I now create feminist media as an independent content creator (@鸡爪抓). My research asks how data—and the decisions behind it—shape who gets heard on digital platforms.
+I am a master’s student in Social Data Analytics and Research at UT Dallas. Before that I worked in advertising and also created online content about gender issues. I am interested in digital platforms, algorithms, information behavior, and gender inequality in online spaces.
 
 ## Research Interests
 
-- Gender inequality embedded in digital platforms and social systems
-- Platform content moderation and algorithmic bias
-- The data-generating processes behind platform metrics and official statistics
+- Digital platforms and algorithmic governance  
+- Information behavior and content visibility  
+- Gender inequality in digital spaces  
+- Data-generating processes behind platform metrics

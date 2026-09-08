@@ -1,0 +1,15 @@
+---
+title: "Assignment 1: Website Design Note"
+---
+
+This website was built with RStudio and Quarto and is published through GitHub Pages. The initial structure came from the course workshop handout, which provided starter files and introduced the workflow from Quarto source files to a published website. The handout describes the process as two connected steps: building the site locally in RStudio and Quarto, then publishing the rendered docs/ folder through GitHub Pages. 
+
+When I first completed the workshop, I had no previous experience with RStudio, Quarto, or GitHub Pages. I uploaded the workshop materials to YouMind and used it to help me interpret the instructions and work through the setup step by step. At that stage, much of my work was mechanical. I followed the starter structure, copied and modified code, and focused mainly on making the website work. I could produce a working page before I fully understood why the different files were needed.
+
+While revisiting the site for Assignment 1, I began to understand the underlying workflow more clearly. I learned that each .qmd file functions as a source document for an individual page, while _quarto.yml organizes the website as a whole, including navigation and formatting. Running quarto render converts the source material into HTML files in the docs/ folder, which GitHub Pages then serves as the public website. This helped me understand the difference between the source files I edit and the final website that users see.
+
+I also began to see why Quarto and RStudio are useful beyond building a personal website. The same workflow can combine narrative text, code, data analysis, and visualizations in one reproducible document. This changed how I understood the purpose of the assignment. The website is not only a place to display my CV or research interests; it is also an introduction to a workflow that can later support research reports, data analysis, and academic projects.
+
+For the visual design, I retained the cosmo theme from the starter template because it is simple, readable, and appropriate for an academic website. I kept the amount of custom CSS limited because my priority at this stage is clarity and structure rather than complex visual design. I organized the navigation around Home, Research, Assignments, and CV so that the site can continue to grow as I complete coursework and develop research projects.
+
+AI tools were part of this learning process. I used YouMind during the initial workshop to interpret instructions, guide technical steps, troubleshoot problems, and help draft or revise content. Later, I used ChatGPT as a second-stage reviewer to compare the website with the assignment requirements, identify placeholder or inaccurate content, and help revise the final version. Through this process, I also learned that AI-generated content needs to be checked carefully, especially when it makes assumptions about personal experience or research activities.

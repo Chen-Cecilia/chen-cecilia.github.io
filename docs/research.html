@@ -103,10 +103,17 @@ ul.task-list li input[type="checkbox"] {
     <a class="nav-link active" href="./research.html" aria-current="page"> 
 <span class="menu-text">Research</span></a>
   </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="./teaching.html"> 
-<span class="menu-text">Teaching</span></a>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-assignments" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Assignments</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-assignments">    
+        <li>
+    <a class="dropdown-item" href="./assign01.html">
+ <span class="dropdown-text">Assignment 1: Website Design Note</span></a>
   </li>  
+    </ul>
+  </li>
   <li class="nav-item">
     <a class="nav-link" href="./cv.html"> 
 <span class="menu-text">CV</span></a>
@@ -139,7 +146,10 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#working-papers" id="toc-working-papers" class="nav-link active" data-scroll-target="#working-papers">Working Papers</a></li>
+  <li><a href="#research-interests" id="toc-research-interests" class="nav-link active" data-scroll-target="#research-interests">Research Interests</a>
+  <ul class="collapse">
+  <li><a href="#platform-governance-and-feminist-content" id="toc-platform-governance-and-feminist-content" class="nav-link" data-scroll-target="#platform-governance-and-feminist-content">Platform Governance and Feminist Content</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -165,15 +175,15 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="working-papers" class="level2">
-<h2 class="anchored" data-anchor-id="working-papers">Working Papers</h2>
-<p><strong>Platform Governance of Feminist Content: A Data Journal of My Own Media</strong> <em>Independent data project, 2024–present</em></p>
-<blockquote class="blockquote">
-<p>Using engagement data I collected from my own content across Douyin, Bilibili, Xiaohongshu, and WeChat Channels, this project examines whether platforms systematically limit the reach of feminist media. It combines quantitative tracking of views, interactions, and follower growth with documented moderation events to investigate algorithmic bias in content governance.</p>
-</blockquote>
-<p><strong>Data-generating process.</strong> These data come from my own records of every post I published across four Chinese platforms between 2024 and 2026 — each post’s views, interactions, and follower change, alongside moderation events like reach-limiting and account suspension. The key decisions were which platforms and time windows to track and how to flag incidents such as a video that stopped being promoted after 200,000 views and was followed by a 7-day suspension, which shape what the data can reveal about platform behavior.</p>
+<section id="research-interests" class="level2">
+<h2 class="anchored" data-anchor-id="research-interests">Research Interests</h2>
+<section id="platform-governance-and-feminist-content" class="level3">
+<h3 class="anchored" data-anchor-id="platform-governance-and-feminist-content">Platform Governance and Feminist Content</h3>
+<p>I am interested in how digital platforms shape the visibility of feminist content. One project I would like to develop examines how platform metrics, recommendation systems, and moderation practices affect the circulation of gender-related content on Chinese social media.</p>
+<p><strong>Data-generating process.</strong> A possible dataset for this project could combine records from my own content creation experience with publicly visible engagement metrics and documented moderation notices from platforms such as Douyin, Bilibili, and Xiaohongshu. An important part of the research design would be to consider how platform interfaces, recommendation systems, and my own decisions about what to post shape the data that become observable.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

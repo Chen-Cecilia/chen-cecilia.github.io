@@ -2,3 +2,7 @@
   object-fit: cover !important;
   object-position: 50% 15% !important;
 }
+
+main p {
+  text-align: justify;
+}
