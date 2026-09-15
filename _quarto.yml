@@ -13,6 +13,7 @@ website:
       - text: Assignments
         menu:
           - assign01.qmd
+          - assign02.qmd
       - href: cv.qmd
         text: CV
     right:

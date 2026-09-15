@@ -68,5 +68,54 @@
     "title": "CV",
     "section": "",
     "text": "Download PDF"
+  },
+  {
+    "objectID": "assign02.html",
+    "href": "assign02.html",
+    "title": "Assignment 2: Google Trends",
+    "section": "",
+    "text": "Search terms: Trump, Kamala Harris, Election\nGeography: United States\nTime window: Past 5 years\nCategory: All Categories\nSearch type: Web Search\nDate/time pulled: September 13, 2026, 8:54 PM\n\nAdditional current-news query: iPhone Duo\n\nGeography: United States\nTime window: Past month\nCategory: All Categories\nSearch type: Web Search\nDate/time pulled: September 15, 2026, 11:03 AM"
+  },
+  {
+    "objectID": "assign02.html#query-parameters",
+    "href": "assign02.html#query-parameters",
+    "title": "Assignment 2: Google Trends",
+    "section": "",
+    "text": "Search terms: Trump, Kamala Harris, Election\nGeography: United States\nTime window: Past 5 years\nCategory: All Categories\nSearch type: Web Search\nDate/time pulled: September 13, 2026, 8:54 PM\n\nAdditional current-news query: iPhone Duo\n\nGeography: United States\nTime window: Past month\nCategory: All Categories\nSearch type: Web Search\nDate/time pulled: September 15, 2026, 11:03 AM"
+  },
+  {
+    "objectID": "assign02.html#what-i-observed",
+    "href": "assign02.html#what-i-observed",
+    "title": "Assignment 2: Google Trends",
+    "section": "What I Observed",
+    "text": "What I Observed\n1. Time window changes interval\nGoogle Trends changes the temporal resolution depending on the time window.\n\nPast 5 years: monthly\n\nPast year: weekly\n\n2. 0–100 is not raw search volume\nThe unit is a normalized search-interest index from 0 to 100.\n\n100 means peak relative interest.\n0 does not necessarily mean literally zero searches.\n\n3. Changing the comparison set changes the values\nAfter removing “Election,” the values for Trump and Kamala Harris changed substantially, showing that Google Trends values are relative to the query rather than fixed search counts."
+  },
+  {
+    "objectID": "assign02.html#website-vs.-r",
+    "href": "assign02.html#website-vs.-r",
+    "title": "Assignment 2: Google Trends",
+    "section": "Website vs. R",
+    "text": "Website vs. R\n\nTemporal resolution:\nThe website returned monthly observations, while the R pull returned weekly observations. I aligned the two series at the monthly level before comparing them.\nDifference in values:\nThe two series were not identical. After alignment, the mean difference (R - Website) was -7.59 points, the median was -6, and the differences ranged from -27.75 to -2.\nDirection of difference:\nIn this comparison, the aggregated R values were consistently lower than the website values.\nInterpretation:\nThis does not necessarily mean that one method is wrong. The discrepancy may reflect differences in temporal resolution, sampling, rescaling, and pull timing."
+  },
+  {
+    "objectID": "assign02.html#website-vs.-r-1",
+    "href": "assign02.html#website-vs.-r-1",
+    "title": "Assignment 2: Google Trends",
+    "section": "Website vs. R",
+    "text": "Website vs. R\n\nTemporal resolution:\nThe website returned monthly observations, while the R pull returned weekly observations. I therefore aggregated the R series to monthly means before comparing the two.\nDifference in values:\nThe two series were not identical. After alignment, the mean difference (R - Website) was -7.59 points, the median was -6, and the differences ranged from -27.75 to -2.\nDirection of difference:\nIn this comparison, the aggregated R values were consistently lower than the website values.\nInterpretation:\nThis does not necessarily mean that one method is wrong. The discrepancy may reflect differences in temporal resolution, sampling, rescaling, and pull timing."
+  },
+  {
+    "objectID": "assign02.html#method-comparison",
+    "href": "assign02.html#method-comparison",
+    "title": "Assignment 2: Google Trends",
+    "section": "Method Comparison",
+    "text": "Method Comparison\n\nReproducibility:\nR is more reproducible because the query parameters and data-processing steps are recorded in code. The website requires the user to manually record the search settings. However, reproducibility of the procedure does not guarantee that Google Trends will always return exactly the same values.\nProvenance:\nIn R, the search terms, geography, time window, category, and search type are documented directly in the code. For the website download, these settings need to be recorded separately.\nScale:\nR is more efficient for running many terms, countries, or repeated queries. The website is easier for a small number of searches, but becomes more time-consuming when the number of queries increases.\nFragility:\nThe R method can fail because of rate limiting. During this assignment, I received a 429 “Too Many Requests” error after repeated requests. The website method is less convenient for automation and can also be affected by interface changes or manual errors.\nAdditional R output:\nThe R object also included geographic breakdowns, related topics, and related queries that were not included in the website time-series CSV.\nHarris vs. Kamala Harris:\nThe results for “Harris” and “Kamala Harris” were very different. “Harris” is a broader and more ambiguous search term, while “Kamala Harris” more closely matches the intended concept. This shows that the choice of search term is part of the measurement process.\nRepeated R pull:\nI ran the same R query twice a few minutes apart, and the values were identical in my test. However, Google Trends data are sampled and rescaled, so identical results in one test do not guarantee that future pulls will always be identical."
+  },
+  {
+    "objectID": "assign02.html#r-code",
+    "href": "assign02.html#r-code",
+    "title": "Assignment 2: Google Trends",
+    "section": "R Code",
+    "text": "R Code\n\nlibrary(gtrendsR)\n\nTrumpHarrisElection &lt;- gtrends(\n  c(\"Trump\", \"Harris\", \"election\"),\n  onlyInterest = TRUE,\n  geo = \"US\",\n  gprop = \"web\",\n  time = \"today+5-y\",\n  category = 0\n)\n\nthe_df &lt;- TrumpHarrisElection$interest_over_time\nplot(TrumpHarrisElection)"
   }
 ]
