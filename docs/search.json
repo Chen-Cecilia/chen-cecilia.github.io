@@ -1,24 +1,24 @@
 [
   {
-    "objectID": "assign2.html",
-    "href": "assign2.html",
-    "title": "Assignment 2",
+    "objectID": "cv.html",
+    "href": "cv.html",
+    "title": "CV",
     "section": "",
-    "text": "Placeholder for Assignment 2."
+    "text": "Download PDF"
   },
   {
-    "objectID": "assign01.html",
-    "href": "assign01.html",
-    "title": "Assignment 1: Website Design Note",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Cecilia Chen",
     "section": "",
-    "text": "This website was built with RStudio and Quarto and is published through GitHub Pages. The initial structure came from the course workshop handout, which provided starter files and introduced the workflow from Quarto source files to a published website. The handout describes the process as two connected steps: building the site locally in RStudio and Quarto, then publishing the rendered docs/ folder through GitHub Pages.\nWhen I first completed the workshop, I had no previous experience with RStudio, Quarto, or GitHub Pages. I uploaded the workshop materials to YouMind and used it to help me interpret the instructions and work through the setup step by step. At that stage, much of my work was mechanical. I followed the starter structure, copied and modified code, and focused mainly on making the website work. I could produce a working page before I fully understood why the different files were needed.\nWhile revisiting the site for Assignment 1, I began to understand the underlying workflow more clearly. I learned that each .qmd file functions as a source document for an individual page, while _quarto.yml organizes the website as a whole, including navigation and formatting. Running quarto render converts the source material into HTML files in the docs/ folder, which GitHub Pages then serves as the public website. This helped me understand the difference between the source files I edit and the final website that users see.\nI also began to see why Quarto and RStudio are useful beyond building a personal website. The same workflow can combine narrative text, code, data analysis, and visualizations in one reproducible document. This changed how I understood the purpose of the assignment. The website is not only a place to display my CV or research interests; it is also an introduction to a workflow that can later support research reports, data analysis, and academic projects.\nFor the visual design, I retained the cosmo theme from the starter template because it is simple, readable, and appropriate for an academic website. I kept the amount of custom CSS limited because my priority at this stage is clarity and structure rather than complex visual design. I organized the navigation around Home, Research, Assignments, and CV so that the site can continue to grow as I complete coursework and develop research projects.\nAI tools were part of this learning process. I used YouMind during the initial workshop to interpret instructions, guide technical steps, troubleshoot problems, and help draft or revise content. Later, I used ChatGPT as a second-stage reviewer to compare the website with the assignment requirements, identify placeholder or inaccurate content, and help revise the final version. Through this process, I also learned that AI-generated content needs to be checked carefully, especially when it makes assumptions about personal experience or research activities."
+    "text": "I am a master’s student in Social Data Analytics and Research at UT Dallas. Before that I worked in advertising and also created online content about gender issues. I am interested in digital platforms, algorithms, information behavior, and gender inequality in online spaces."
   },
   {
-    "objectID": "assign01.html#generative-ai-use-disclosure",
-    "href": "assign01.html#generative-ai-use-disclosure",
-    "title": "Assignment 1: Website Design Note",
-    "section": "Generative AI Use Disclosure",
-    "text": "Generative AI Use Disclosure\n\nTools Used\nYouMind — Auto mode.\nI used YouMind during the initial website workshop and subsequent website development. I used its Auto mode and therefore do not know which underlying language model was selected for each interaction.\nChatGPT — subscription version.\nI used ChatGPT during website development and final review.\n\n\nHow AI Was Used\nI used AI to interpret course and assignment instructions, break the task into smaller steps, explain unfamiliar concepts, troubleshoot technical problems, and assist with drafting and revising English text based on information and ideas I provided. I also used AI to review the completed website against the assignment requirements.\nThe initial website structure was based on the starter files and workflow provided in the course workshop handout. AI was used to help me understand, implement, customize, and revise that structure rather than to replace the course materials.\n\n\nWhy AI Was Used\nI had no prior experience with RStudio, Quarto, or GitHub Pages when I began this work. I used AI as a learning scaffold to navigate an unfamiliar technical workflow, clarify concepts, troubleshoot problems, and improve my English expression. I checked the final website against my own experience, the course materials, and the assignment requirements."
+    "objectID": "index.html#research-interests",
+    "href": "index.html#research-interests",
+    "title": "Cecilia Chen",
+    "section": "Research Interests",
+    "text": "Research Interests\n\nDigital platforms and algorithmic governance\n\nInformation behavior and content visibility\n\nGender inequality in digital spaces\n\nData-generating processes behind platform metrics"
   },
   {
     "objectID": "research.html",
@@ -49,27 +49,6 @@
     "text": "Teaching experience will be added here as it develops. I am currently a new graduate student in Social Data Analytics at UT Dallas."
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Cecilia Chen",
-    "section": "",
-    "text": "I am a master’s student in Social Data Analytics and Research at UT Dallas. Before that I worked in advertising and also created online content about gender issues. I am interested in digital platforms, algorithms, information behavior, and gender inequality in online spaces."
-  },
-  {
-    "objectID": "index.html#research-interests",
-    "href": "index.html#research-interests",
-    "title": "Cecilia Chen",
-    "section": "Research Interests",
-    "text": "Research Interests\n\nDigital platforms and algorithmic governance\n\nInformation behavior and content visibility\n\nGender inequality in digital spaces\n\nData-generating processes behind platform metrics"
-  },
-  {
-    "objectID": "cv.html",
-    "href": "cv.html",
-    "title": "CV",
-    "section": "",
-    "text": "Download PDF"
-  },
-  {
     "objectID": "assign02.html",
     "href": "assign02.html",
     "title": "Assignment 2: Google Trends",
@@ -91,18 +70,18 @@
     "text": "What I Observed\n1. Time window changes interval\nGoogle Trends changes the temporal resolution depending on the time window.\n\nPast 5 years: monthly\n\nPast year: weekly\n\n2. 0–100 is not raw search volume\nThe unit is a normalized search-interest index from 0 to 100.\n\n100 means peak relative interest.\n0 does not necessarily mean literally zero searches.\n\n3. Changing the comparison set changes the values\nAfter removing “Election,” the values for Trump and Kamala Harris changed substantially, showing that Google Trends values are relative to the query rather than fixed search counts."
   },
   {
+    "objectID": "assign02.html#r-code",
+    "href": "assign02.html#r-code",
+    "title": "Assignment 2: Google Trends",
+    "section": "R Code",
+    "text": "R Code\n\nlibrary(gtrendsR)\n\nTrumpHarrisElection &lt;- gtrends(\n  c(\"Trump\", \"Harris\", \"election\"),\n  onlyInterest = TRUE,\n  geo = \"US\",\n  gprop = \"web\",\n  time = \"today+5-y\",\n  category = 0\n)\n\nthe_df &lt;- TrumpHarrisElection$interest_over_time\nplot(TrumpHarrisElection)"
+  },
+  {
     "objectID": "assign02.html#website-vs.-r",
     "href": "assign02.html#website-vs.-r",
     "title": "Assignment 2: Google Trends",
     "section": "Website vs. R",
     "text": "Website vs. R\n\nTemporal resolution:\nThe website returned monthly observations, while the R pull returned weekly observations. I aligned the two series at the monthly level before comparing them.\nDifference in values:\nThe two series were not identical. After alignment, the mean difference (R - Website) was -7.59 points, the median was -6, and the differences ranged from -27.75 to -2.\nDirection of difference:\nIn this comparison, the aggregated R values were consistently lower than the website values.\nInterpretation:\nThis does not necessarily mean that one method is wrong. The discrepancy may reflect differences in temporal resolution, sampling, rescaling, and pull timing."
-  },
-  {
-    "objectID": "assign02.html#website-vs.-r-1",
-    "href": "assign02.html#website-vs.-r-1",
-    "title": "Assignment 2: Google Trends",
-    "section": "Website vs. R",
-    "text": "Website vs. R\n\nTemporal resolution:\nThe website returned monthly observations, while the R pull returned weekly observations. I therefore aggregated the R series to monthly means before comparing the two.\nDifference in values:\nThe two series were not identical. After alignment, the mean difference (R - Website) was -7.59 points, the median was -6, and the differences ranged from -27.75 to -2.\nDirection of difference:\nIn this comparison, the aggregated R values were consistently lower than the website values.\nInterpretation:\nThis does not necessarily mean that one method is wrong. The discrepancy may reflect differences in temporal resolution, sampling, rescaling, and pull timing."
   },
   {
     "objectID": "assign02.html#method-comparison",
@@ -112,10 +91,17 @@
     "text": "Method Comparison\n\nReproducibility:\nR is more reproducible because the query parameters and data-processing steps are recorded in code. The website requires the user to manually record the search settings. However, reproducibility of the procedure does not guarantee that Google Trends will always return exactly the same values.\nProvenance:\nIn R, the search terms, geography, time window, category, and search type are documented directly in the code. For the website download, these settings need to be recorded separately.\nScale:\nR is more efficient for running many terms, countries, or repeated queries. The website is easier for a small number of searches, but becomes more time-consuming when the number of queries increases.\nFragility:\nThe R method can fail because of rate limiting. During this assignment, I received a 429 “Too Many Requests” error after repeated requests. The website method is less convenient for automation and can also be affected by interface changes or manual errors.\nAdditional R output:\nThe R object also included geographic breakdowns, related topics, and related queries that were not included in the website time-series CSV.\nHarris vs. Kamala Harris:\nThe results for “Harris” and “Kamala Harris” were very different. “Harris” is a broader and more ambiguous search term, while “Kamala Harris” more closely matches the intended concept. This shows that the choice of search term is part of the measurement process.\nRepeated R pull:\nI ran the same R query twice a few minutes apart, and the values were identical in my test. However, Google Trends data are sampled and rescaled, so identical results in one test do not guarantee that future pulls will always be identical."
   },
   {
-    "objectID": "assign02.html#r-code",
-    "href": "assign02.html#r-code",
-    "title": "Assignment 2: Google Trends",
-    "section": "R Code",
-    "text": "R Code\n\nlibrary(gtrendsR)\n\nTrumpHarrisElection &lt;- gtrends(\n  c(\"Trump\", \"Harris\", \"election\"),\n  onlyInterest = TRUE,\n  geo = \"US\",\n  gprop = \"web\",\n  time = \"today+5-y\",\n  category = 0\n)\n\nthe_df &lt;- TrumpHarrisElection$interest_over_time\nplot(TrumpHarrisElection)"
+    "objectID": "assign01.html",
+    "href": "assign01.html",
+    "title": "Assignment 1: Website Design Note",
+    "section": "",
+    "text": "This website was built with RStudio and Quarto and is published through GitHub Pages. The initial structure came from the course workshop handout, which provided starter files and introduced the workflow from Quarto source files to a published website. The handout describes the process as two connected steps: building the site locally in RStudio and Quarto, then publishing the rendered docs/ folder through GitHub Pages.\nWhen I first completed the workshop, I had no previous experience with RStudio, Quarto, or GitHub Pages. I uploaded the workshop materials to YouMind and used it to help me interpret the instructions and work through the setup step by step. At that stage, much of my work was mechanical. I followed the starter structure, copied and modified code, and focused mainly on making the website work. I could produce a working page before I fully understood why the different files were needed.\nWhile revisiting the site for Assignment 1, I began to understand the underlying workflow more clearly. I learned that each .qmd file functions as a source document for an individual page, while _quarto.yml organizes the website as a whole, including navigation and formatting. Running quarto render converts the source material into HTML files in the docs/ folder, which GitHub Pages then serves as the public website. This helped me understand the difference between the source files I edit and the final website that users see.\nI also began to see why Quarto and RStudio are useful beyond building a personal website. The same workflow can combine narrative text, code, data analysis, and visualizations in one reproducible document. This changed how I understood the purpose of the assignment. The website is not only a place to display my CV or research interests; it is also an introduction to a workflow that can later support research reports, data analysis, and academic projects.\nFor the visual design, I retained the cosmo theme from the starter template because it is simple, readable, and appropriate for an academic website. I kept the amount of custom CSS limited because my priority at this stage is clarity and structure rather than complex visual design. I organized the navigation around Home, Research, Assignments, and CV so that the site can continue to grow as I complete coursework and develop research projects.\nAI tools were part of this learning process. I used YouMind during the initial workshop to interpret instructions, guide technical steps, troubleshoot problems, and help draft or revise content. Later, I used ChatGPT as a second-stage reviewer to compare the website with the assignment requirements, identify placeholder or inaccurate content, and help revise the final version. Through this process, I also learned that AI-generated content needs to be checked carefully, especially when it makes assumptions about personal experience or research activities."
+  },
+  {
+    "objectID": "assign01.html#generative-ai-use-disclosure",
+    "href": "assign01.html#generative-ai-use-disclosure",
+    "title": "Assignment 1: Website Design Note",
+    "section": "Generative AI Use Disclosure",
+    "text": "Generative AI Use Disclosure\n\nTools Used\nYouMind — Auto mode.\nI used YouMind during the initial website workshop and subsequent website development. I used its Auto mode and therefore do not know which underlying language model was selected for each interaction.\nChatGPT — subscription version.\nI used ChatGPT during website development and final review.\n\n\nHow AI Was Used\nI used AI to interpret course and assignment instructions, break the task into smaller steps, explain unfamiliar concepts, troubleshoot technical problems, and assist with drafting and revising English text based on information and ideas I provided. I also used AI to review the completed website against the assignment requirements.\nThe initial website structure was based on the starter files and workflow provided in the course workshop handout. AI was used to help me understand, implement, customize, and revise that structure rather than to replace the course materials.\n\n\nWhy AI Was Used\nI had no prior experience with RStudio, Quarto, or GitHub Pages when I began this work. I used AI as a learning scaffold to navigate an unfamiliar technical workflow, clarify concepts, troubleshoot problems, and improve my English expression. I checked the final website against my own experience, the course materials, and the assignment requirements."
   }
 ]
