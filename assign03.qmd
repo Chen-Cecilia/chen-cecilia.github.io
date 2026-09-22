@@ -1,0 +1,150 @@
+---
+title: "Assignment 3: ACS via tidycensus"
+author: "Cecilia Chen"
+format:
+  html:
+    toc: true
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Setup
+
+This analysis uses 2024 ACS 5-year estimates for Texas counties. I obtained my Census API key separately and installed it in my R environment; the key is not included in this document.
+
+```{r}
+#| label: packages
+library(tidycensus)
+library(tigris)
+library(sf)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+
+options(tigris_use_cache = TRUE)
+```
+
+## Data
+
+```{r}
+#| label: download-data
+state_abbr <- "TX"
+geo_level <- "county"
+year_acs <- 2024
+survey <- "acs5"
+
+# Median household income, people below poverty, and the poverty universe.
+my_vars <- c(
+  income = "B19013_001",
+  pov = "B17001_002",
+  povden = "B17001_001"
+)
+
+acs_wide <- get_acs(
+  geography = geo_level,
+  variables = my_vars,
+  state = state_abbr,
+  year = year_acs,
+  survey = survey,
+  geometry = TRUE,
+  output = "wide"
+) |>
+  mutate(
+    pov_rate = povE / povdenE,
+    pov_moe = moe_prop(povE, povdenE, povM, povdenM),
+    pov_ci_low = pmax(0, pov_rate - pov_moe),
+    pov_ci_high = pmin(1, pov_rate + pov_moe)
+  )
+
+write_csv(st_drop_geometry(acs_wide), "acs_TX_2024.csv")
+```
+
+## Map: median household income
+
+```{r}
+#| label: income-map
+#| fig-width: 10
+#| fig-height: 7
+ggplot(acs_wide) +
+  geom_sf(aes(fill = incomeE), color = NA) +
+  scale_fill_viridis_c(
+    name = "Median household\nincome (USD)",
+    labels = scales::dollar
+  ) +
+  labs(
+    title = "Median household income by Texas county",
+    subtitle = "2024 ACS 5-year estimates",
+    caption = "Source: U.S. Census Bureau, American Community Survey, via tidycensus"
+  ) +
+  theme_minimal()
+```
+
+## Poverty-rate table
+
+The table reports the ten counties with the highest and lowest estimated poverty rates. The MOE is the 90% confidence-interval half-width calculated with `moe_prop()`.
+
+```{r}
+#| label: poverty-table
+county_rates <- acs_wide |>
+  st_drop_geometry() |>
+  transmute(County = NAME, pov_rate, pov_moe, ci_low = pov_ci_low, ci_high = pov_ci_high)
+
+top10 <- county_rates |>
+  arrange(desc(pov_rate)) |>
+  slice_head(n = 10)
+
+bottom10 <- county_rates |>
+  arrange(pov_rate) |>
+  slice_head(n = 10)
+
+top10 |>
+  transmute(
+    County,
+    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),
+    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1)
+  ) |>
+  knitr::kable(caption = "Ten Texas counties with the highest estimated poverty rates")
+
+bottom10 |>
+  transmute(
+    County,
+    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),
+    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1)
+  ) |>
+  knitr::kable(caption = "Ten Texas counties with the lowest estimated poverty rates")
+```
+
+## Uncertainty check
+
+```{r}
+#| label: uncertainty-check
+# This finds the first adjacent pair in the high-poverty table with overlapping 90% confidence intervals.
+overlap_pair <- top10 |>
+  mutate(
+    next_county = lead(County),
+    next_low = lead(ci_low),
+    next_high = lead(ci_high),
+    overlaps = ci_low <= next_high & next_low <= ci_high
+  ) |>
+  filter(overlaps) |>
+  slice_head(n = 1)
+
+overlap_pair |>
+  transmute(
+    County,
+    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),
+    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1),
+    `Overlaps with` = next_county
+  ) |>
+  knitr::kable(caption = "An overlapping pair, if one occurs among the ten highest rates")
+```
+
+Dimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate.
+
+## Methods note
+
+I used 2024 American Community Survey (ACS) 5-year estimates for Texas counties. I mapped median household income (table B19013_001) and calculated the poverty rate as the number of people below poverty (B17001_002) divided by the poverty universe (B17001_001). Using a rate rather than a raw count avoids treating larger counties as more impoverished simply because they have more residents. I retained ACS margins of error and used `moe_prop()` to calculate the margin of error for the poverty rate. Dimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate.

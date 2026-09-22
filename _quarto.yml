@@ -14,6 +14,7 @@ website:
         menu:
           - assign01.qmd
           - assign02.qmd
+          - assing03.qmd
       - href: cv.qmd
         text: CV
     right:
