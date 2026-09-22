@@ -21,18 +21,53 @@
     "text": "Research Interests\n\nDigital platforms and algorithmic governance\n\nInformation behavior and content visibility\n\nGender inequality in digital spaces\n\nData-generating processes behind platform metrics"
   },
   {
-    "objectID": "research.html",
-    "href": "research.html",
-    "title": "Research",
+    "objectID": "assign03.html",
+    "href": "assign03.html",
+    "title": "Assignment 3: ACS via tidycensus",
     "section": "",
-    "text": "I am interested in how digital platforms shape the visibility of feminist content. One project I would like to develop examines how platform metrics, recommendation systems, and moderation practices affect the circulation of gender-related content on Chinese social media.\nData-generating process. A possible dataset for this project could combine records from my own content creation experience with publicly visible engagement metrics and documented moderation notices from platforms such as Douyin, Bilibili, and Xiaohongshu. An important part of the research design would be to consider how platform interfaces, recommendation systems, and my own decisions about what to post shape the data that become observable."
+    "text": "This analysis uses 2024 ACS 5-year estimates for Texas counties. I obtained my Census API key separately and installed it in my R environment; the key is not included in this document.\n\nlibrary(tidycensus)\nlibrary(tigris)\nlibrary(sf)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(ggplot2)\nlibrary(readr)\n\noptions(tigris_use_cache = TRUE)"
   },
   {
-    "objectID": "research.html#research-interests",
-    "href": "research.html#research-interests",
-    "title": "Research",
+    "objectID": "assign03.html#setup",
+    "href": "assign03.html#setup",
+    "title": "Assignment 3: ACS via tidycensus",
     "section": "",
-    "text": "I am interested in how digital platforms shape the visibility of feminist content. One project I would like to develop examines how platform metrics, recommendation systems, and moderation practices affect the circulation of gender-related content on Chinese social media.\nData-generating process. A possible dataset for this project could combine records from my own content creation experience with publicly visible engagement metrics and documented moderation notices from platforms such as Douyin, Bilibili, and Xiaohongshu. An important part of the research design would be to consider how platform interfaces, recommendation systems, and my own decisions about what to post shape the data that become observable."
+    "text": "This analysis uses 2024 ACS 5-year estimates for Texas counties. I obtained my Census API key separately and installed it in my R environment; the key is not included in this document.\n\nlibrary(tidycensus)\nlibrary(tigris)\nlibrary(sf)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(ggplot2)\nlibrary(readr)\n\noptions(tigris_use_cache = TRUE)"
+  },
+  {
+    "objectID": "assign03.html#data",
+    "href": "assign03.html#data",
+    "title": "Assignment 3: ACS via tidycensus",
+    "section": "Data",
+    "text": "Data\n\nstate_abbr &lt;- \"TX\"\ngeo_level &lt;- \"county\"\nyear_acs &lt;- 2024\nsurvey &lt;- \"acs5\"\n\n# Median household income, people below poverty, and the poverty universe.\nmy_vars &lt;- c(\n  income = \"B19013_001\",\n  pov = \"B17001_002\",\n  povden = \"B17001_001\"\n)\n\nacs_wide &lt;- get_acs(\n  geography = geo_level,\n  variables = my_vars,\n  state = state_abbr,\n  year = year_acs,\n  survey = survey,\n  geometry = TRUE,\n  output = \"wide\"\n) |&gt;\n  mutate(\n    pov_rate = povE / povdenE,\n    pov_moe = moe_prop(povE, povdenE, povM, povdenM),\n    pov_ci_low = pmax(0, pov_rate - pov_moe),\n    pov_ci_high = pmin(1, pov_rate + pov_moe)\n  )\n\nwrite_csv(st_drop_geometry(acs_wide), \"acs_TX_2024.csv\")"
+  },
+  {
+    "objectID": "assign03.html#map-median-household-income",
+    "href": "assign03.html#map-median-household-income",
+    "title": "Assignment 3: ACS via tidycensus",
+    "section": "Map: median household income",
+    "text": "Map: median household income\n\nggplot(acs_wide) +\n  geom_sf(aes(fill = incomeE), color = NA) +\n  scale_fill_viridis_c(\n    name = \"Median household\\nincome (USD)\",\n    labels = scales::dollar\n  ) +\n  labs(\n    title = \"Median household income by Texas county\",\n    subtitle = \"2024 ACS 5-year estimates\",\n    caption = \"Source: U.S. Census Bureau, American Community Survey, via tidycensus\"\n  ) +\n  theme_minimal()"
+  },
+  {
+    "objectID": "assign03.html#poverty-rate-table",
+    "href": "assign03.html#poverty-rate-table",
+    "title": "Assignment 3: ACS via tidycensus",
+    "section": "Poverty-rate table",
+    "text": "Poverty-rate table\nThe table reports the ten counties with the highest and lowest estimated poverty rates. The MOE is the 90% confidence-interval half-width calculated with moe_prop().\n\ncounty_rates &lt;- acs_wide |&gt;\n  st_drop_geometry() |&gt;\n  transmute(County = NAME, pov_rate, pov_moe, ci_low = pov_ci_low, ci_high = pov_ci_high)\n\ntop10 &lt;- county_rates |&gt;\n  arrange(desc(pov_rate)) |&gt;\n  slice_head(n = 10)\n\nbottom10 &lt;- county_rates |&gt;\n  arrange(pov_rate) |&gt;\n  slice_head(n = 10)\n\ntop10 |&gt;\n  transmute(\n    County,\n    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),\n    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1)\n  ) |&gt;\n  knitr::kable(caption = \"Ten Texas counties with the highest estimated poverty rates\")\n\n\nTen Texas counties with the highest estimated poverty rates\n\n\nCounty\nPoverty rate\nMOE (90% CI half-width)\n\n\n\n\nDimmit County, Texas\n41.1%\n8.9%\n\n\nZapata County, Texas\n38.4%\n6.0%\n\n\nZavala County, Texas\n33.9%\n9.5%\n\n\nStarr County, Texas\n33.5%\n3.2%\n\n\nDuval County, Texas\n33.3%\n8.4%\n\n\nPresidio County, Texas\n32.0%\n12.8%\n\n\nEdwards County, Texas\n31.9%\n23.2%\n\n\nJim Hogg County, Texas\n31.4%\n11.1%\n\n\nSwisher County, Texas\n30.1%\n6.9%\n\n\nKleberg County, Texas\n28.1%\n4.3%\n\n\n\n\nbottom10 |&gt;\n  transmute(\n    County,\n    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),\n    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1)\n  ) |&gt;\n  knitr::kable(caption = \"Ten Texas counties with the lowest estimated poverty rates\")\n\n\nTen Texas counties with the lowest estimated poverty rates\n\n\nCounty\nPoverty rate\nMOE (90% CI half-width)\n\n\n\n\nRockwall County, Texas\n4.0%\n0.7%\n\n\nSterling County, Texas\n4.3%\n2.9%\n\n\nSutton County, Texas\n4.5%\n2.9%\n\n\nKendall County, Texas\n5.0%\n1.4%\n\n\nArmstrong County, Texas\n5.2%\n2.8%\n\n\nFoard County, Texas\n5.6%\n4.4%\n\n\nRoberts County, Texas\n5.6%\n3.9%\n\n\nLoving County, Texas\n6.1%\n2.5%\n\n\nHemphill County, Texas\n6.2%\n3.2%\n\n\nCollin County, Texas\n6.2%\n0.4%"
+  },
+  {
+    "objectID": "assign03.html#uncertainty-check",
+    "href": "assign03.html#uncertainty-check",
+    "title": "Assignment 3: ACS via tidycensus",
+    "section": "Uncertainty check",
+    "text": "Uncertainty check\n\n# This finds the first adjacent pair in the high-poverty table with overlapping 90% confidence intervals.\noverlap_pair &lt;- top10 |&gt;\n  mutate(\n    next_county = lead(County),\n    next_low = lead(ci_low),\n    next_high = lead(ci_high),\n    overlaps = ci_low &lt;= next_high & next_low &lt;= ci_high\n  ) |&gt;\n  filter(overlaps) |&gt;\n  slice_head(n = 1)\n\noverlap_pair |&gt;\n  transmute(\n    County,\n    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),\n    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1),\n    `Overlaps with` = next_county\n  ) |&gt;\n  knitr::kable(caption = \"An overlapping pair, if one occurs among the ten highest rates\")\n\n\nAn overlapping pair, if one occurs among the ten highest rates\n\n\n\n\n\n\n\n\nCounty\nPoverty rate\nMOE (90% CI half-width)\nOverlaps with\n\n\n\n\nDimmit County, Texas\n41.1%\n8.9%\nZapata County, Texas\n\n\n\n\n\nDimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate."
+  },
+  {
+    "objectID": "assign03.html#methods-note",
+    "href": "assign03.html#methods-note",
+    "title": "Assignment 3: ACS via tidycensus",
+    "section": "Methods note",
+    "text": "Methods note\nI used 2024 American Community Survey (ACS) 5-year estimates for Texas counties. I mapped median household income (table B19013_001) and calculated the poverty rate as the number of people below poverty (B17001_002) divided by the poverty universe (B17001_001). Using a rate rather than a raw count avoids treating larger counties as more impoverished simply because they have more residents. I retained ACS margins of error and used moe_prop() to calculate the margin of error for the poverty rate. Dimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate."
   },
   {
     "objectID": "teaching.html",
@@ -47,6 +82,20 @@
     "title": "Teaching",
     "section": "",
     "text": "Teaching experience will be added here as it develops. I am currently a new graduate student in Social Data Analytics at UT Dallas."
+  },
+  {
+    "objectID": "research.html",
+    "href": "research.html",
+    "title": "Research",
+    "section": "",
+    "text": "I am interested in how digital platforms shape the visibility of feminist content. One project I would like to develop examines how platform metrics, recommendation systems, and moderation practices affect the circulation of gender-related content on Chinese social media.\nData-generating process. A possible dataset for this project could combine records from my own content creation experience with publicly visible engagement metrics and documented moderation notices from platforms such as Douyin, Bilibili, and Xiaohongshu. An important part of the research design would be to consider how platform interfaces, recommendation systems, and my own decisions about what to post shape the data that become observable."
+  },
+  {
+    "objectID": "research.html#research-interests",
+    "href": "research.html#research-interests",
+    "title": "Research",
+    "section": "",
+    "text": "I am interested in how digital platforms shape the visibility of feminist content. One project I would like to develop examines how platform metrics, recommendation systems, and moderation practices affect the circulation of gender-related content on Chinese social media.\nData-generating process. A possible dataset for this project could combine records from my own content creation experience with publicly visible engagement metrics and documented moderation notices from platforms such as Douyin, Bilibili, and Xiaohongshu. An important part of the research design would be to consider how platform interfaces, recommendation systems, and my own decisions about what to post shape the data that become observable."
   },
   {
     "objectID": "assign02.html",
@@ -103,54 +152,5 @@
     "title": "Assignment 1: Website Design Note",
     "section": "Generative AI Use Disclosure",
     "text": "Generative AI Use Disclosure\n\nTools Used\nYouMind — Auto mode.\nI used YouMind during the initial website workshop and subsequent website development. I used its Auto mode and therefore do not know which underlying language model was selected for each interaction.\nChatGPT — subscription version.\nI used ChatGPT during website development and final review.\n\n\nHow AI Was Used\nI used AI to interpret course and assignment instructions, break the task into smaller steps, explain unfamiliar concepts, troubleshoot technical problems, and assist with drafting and revising English text based on information and ideas I provided. I also used AI to review the completed website against the assignment requirements.\nThe initial website structure was based on the starter files and workflow provided in the course workshop handout. AI was used to help me understand, implement, customize, and revise that structure rather than to replace the course materials.\n\n\nWhy AI Was Used\nI had no prior experience with RStudio, Quarto, or GitHub Pages when I began this work. I used AI as a learning scaffold to navigate an unfamiliar technical workflow, clarify concepts, troubleshoot problems, and improve my English expression. I checked the final website against my own experience, the course materials, and the assignment requirements."
-  },
-  {
-    "objectID": "assign03.html",
-    "href": "assign03.html",
-    "title": "Assignment 3: ACS via tidycensus",
-    "section": "",
-    "text": "This analysis uses 2024 ACS 5-year estimates for Texas counties. I obtained my Census API key separately and installed it in my R environment; the key is not included in this document.\n\nlibrary(tidycensus)\nlibrary(tigris)\nlibrary(sf)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(ggplot2)\nlibrary(readr)\n\noptions(tigris_use_cache = TRUE)"
-  },
-  {
-    "objectID": "assign03.html#setup",
-    "href": "assign03.html#setup",
-    "title": "Assignment 3: ACS via tidycensus",
-    "section": "",
-    "text": "This analysis uses 2024 ACS 5-year estimates for Texas counties. I obtained my Census API key separately and installed it in my R environment; the key is not included in this document.\n\nlibrary(tidycensus)\nlibrary(tigris)\nlibrary(sf)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(ggplot2)\nlibrary(readr)\n\noptions(tigris_use_cache = TRUE)"
-  },
-  {
-    "objectID": "assign03.html#data",
-    "href": "assign03.html#data",
-    "title": "Assignment 3: ACS via tidycensus",
-    "section": "Data",
-    "text": "Data\n\nstate_abbr &lt;- \"TX\"\ngeo_level &lt;- \"county\"\nyear_acs &lt;- 2024\nsurvey &lt;- \"acs5\"\n\n# Median household income, people below poverty, and the poverty universe.\nmy_vars &lt;- c(\n  income = \"B19013_001\",\n  pov = \"B17001_002\",\n  povden = \"B17001_001\"\n)\n\nacs_wide &lt;- get_acs(\n  geography = geo_level,\n  variables = my_vars,\n  state = state_abbr,\n  year = year_acs,\n  survey = survey,\n  geometry = TRUE,\n  output = \"wide\"\n) |&gt;\n  mutate(\n    pov_rate = povE / povdenE,\n    pov_moe = moe_prop(povE, povdenE, povM, povdenM),\n    pov_ci_low = pmax(0, pov_rate - pov_moe),\n    pov_ci_high = pmin(1, pov_rate + pov_moe)\n  )\n\nwrite_csv(st_drop_geometry(acs_wide), \"acs_TX_2024.csv\")"
-  },
-  {
-    "objectID": "assign03.html#map-median-household-income",
-    "href": "assign03.html#map-median-household-income",
-    "title": "Assignment 3: ACS via tidycensus",
-    "section": "Map: median household income",
-    "text": "Map: median household income\n\nggplot(acs_wide) +\n  geom_sf(aes(fill = incomeE), color = NA) +\n  scale_fill_viridis_c(\n    name = \"Median household\\nincome (USD)\",\n    labels = scales::dollar\n  ) +\n  labs(\n    title = \"Median household income by Texas county\",\n    subtitle = \"2024 ACS 5-year estimates\",\n    caption = \"Source: U.S. Census Bureau, American Community Survey, via tidycensus\"\n  ) +\n  theme_minimal()"
-  },
-  {
-    "objectID": "assign03.html#poverty-rate-table",
-    "href": "assign03.html#poverty-rate-table",
-    "title": "Assignment 3: ACS via tidycensus",
-    "section": "Poverty-rate table",
-    "text": "Poverty-rate table\nThe table reports the ten counties with the highest and lowest estimated poverty rates. The MOE is the 90% confidence-interval half-width calculated with moe_prop().\n\ncounty_rates &lt;- acs_wide |&gt;\n  st_drop_geometry() |&gt;\n  transmute(County = NAME, pov_rate, pov_moe, ci_low = pov_ci_low, ci_high = pov_ci_high)\n\ntop10 &lt;- county_rates |&gt;\n  arrange(desc(pov_rate)) |&gt;\n  slice_head(n = 10)\n\nbottom10 &lt;- county_rates |&gt;\n  arrange(pov_rate) |&gt;\n  slice_head(n = 10)\n\ntop10 |&gt;\n  transmute(\n    County,\n    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),\n    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1)\n  ) |&gt;\n  knitr::kable(caption = \"Ten Texas counties with the highest estimated poverty rates\")\n\n\nTen Texas counties with the highest estimated poverty rates\n\n\nCounty\nPoverty rate\nMOE (90% CI half-width)\n\n\n\n\nDimmit County, Texas\n41.1%\n8.9%\n\n\nZapata County, Texas\n38.4%\n6.0%\n\n\nZavala County, Texas\n33.9%\n9.5%\n\n\nStarr County, Texas\n33.5%\n3.2%\n\n\nDuval County, Texas\n33.3%\n8.4%\n\n\nPresidio County, Texas\n32.0%\n12.8%\n\n\nEdwards County, Texas\n31.9%\n23.2%\n\n\nJim Hogg County, Texas\n31.4%\n11.1%\n\n\nSwisher County, Texas\n30.1%\n6.9%\n\n\nKleberg County, Texas\n28.1%\n4.3%\n\n\n\n\nbottom10 |&gt;\n  transmute(\n    County,\n    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),\n    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1)\n  ) |&gt;\n  knitr::kable(caption = \"Ten Texas counties with the lowest estimated poverty rates\")\n\n\nTen Texas counties with the lowest estimated poverty rates\n\n\nCounty\nPoverty rate\nMOE (90% CI half-width)\n\n\n\n\nRockwall County, Texas\n4.0%\n0.7%\n\n\nSterling County, Texas\n4.3%\n2.9%\n\n\nSutton County, Texas\n4.5%\n2.9%\n\n\nKendall County, Texas\n5.0%\n1.4%\n\n\nArmstrong County, Texas\n5.2%\n2.8%\n\n\nFoard County, Texas\n5.6%\n4.4%\n\n\nRoberts County, Texas\n5.6%\n3.9%\n\n\nLoving County, Texas\n6.1%\n2.5%\n\n\nHemphill County, Texas\n6.2%\n3.2%\n\n\nCollin County, Texas\n6.2%\n0.4%"
-  },
-  {
-    "objectID": "assign03.html#uncertainty-check",
-    "href": "assign03.html#uncertainty-check",
-    "title": "Assignment 3: ACS via tidycensus",
-    "section": "Uncertainty check",
-    "text": "Uncertainty check\n\n# This finds the first adjacent pair in the high-poverty table with overlapping 90% confidence intervals.\noverlap_pair &lt;- top10 |&gt;\n  mutate(\n    next_county = lead(County),\n    next_low = lead(ci_low),\n    next_high = lead(ci_high),\n    overlaps = ci_low &lt;= next_high & next_low &lt;= ci_high\n  ) |&gt;\n  filter(overlaps) |&gt;\n  slice_head(n = 1)\n\noverlap_pair |&gt;\n  transmute(\n    County,\n    `Poverty rate` = scales::percent(pov_rate, accuracy = 0.1),\n    `MOE (90% CI half-width)` = scales::percent(pov_moe, accuracy = 0.1),\n    `Overlaps with` = next_county\n  ) |&gt;\n  knitr::kable(caption = \"An overlapping pair, if one occurs among the ten highest rates\")\n\n\nAn overlapping pair, if one occurs among the ten highest rates\n\n\n\n\n\n\n\n\nCounty\nPoverty rate\nMOE (90% CI half-width)\nOverlaps with\n\n\n\n\nDimmit County, Texas\n41.1%\n8.9%\nZapata County, Texas\n\n\n\n\n\nDimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate."
-  },
-  {
-    "objectID": "assign03.html#methods-note",
-    "href": "assign03.html#methods-note",
-    "title": "Assignment 3: ACS via tidycensus",
-    "section": "Methods note",
-    "text": "Methods note\nI used 2024 American Community Survey (ACS) 5-year estimates for Texas counties. I mapped median household income (table B19013_001) and calculated the poverty rate as the number of people below poverty (B17001_002) divided by the poverty universe (B17001_001). Using a rate rather than a raw count avoids treating larger counties as more impoverished simply because they have more residents. I retained ACS margins of error and used moe_prop() to calculate the margin of error for the poverty rate. Dimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate."
   }
 ]
