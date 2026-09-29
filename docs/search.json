@@ -35,6 +35,13 @@
     "text": "This analysis uses 2024 ACS 5-year estimates for Texas counties. I obtained my Census API key separately and installed it in my R environment; the key is not included in this document.\n\nlibrary(tidycensus)\nlibrary(tigris)\nlibrary(sf)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(ggplot2)\nlibrary(readr)\n\noptions(tigris_use_cache = TRUE)"
   },
   {
+    "objectID": "assign03.html#variable-selection",
+    "href": "assign03.html#variable-selection",
+    "title": "Assignment 3: ACS via tidycensus",
+    "section": "Variable selection",
+    "text": "Variable selection\nI checked the ACS variable catalog before selecting variables.\n\nvars &lt;- load_variables(2024, \"acs5\")\n\nvars |&gt;\n  filter(name %in% c(\"B19013_001\", \"B17001_002\", \"B17001_001\")) |&gt;\n  select(name, label)\n\n# A tibble: 3 × 2\n  name       label                                                              \n  &lt;chr&gt;      &lt;chr&gt;                                                              \n1 B17001_001 Estimate!!Total:                                                   \n2 B17001_002 Estimate!!Total:!!Income in the past 12 months below poverty level:\n3 B19013_001 Estimate!!Median household income in the past 12 months (in 2024 i…"
+  },
+  {
     "objectID": "assign03.html#data",
     "href": "assign03.html#data",
     "title": "Assignment 3: ACS via tidycensus",
@@ -67,7 +74,7 @@
     "href": "assign03.html#methods-note",
     "title": "Assignment 3: ACS via tidycensus",
     "section": "Methods note",
-    "text": "Methods note\nI used 2024 American Community Survey (ACS) 5-year estimates for Texas counties. I mapped median household income (table B19013_001) and calculated the poverty rate as the number of people below poverty (B17001_002) divided by the poverty universe (B17001_001). Using a rate rather than a raw count avoids treating larger counties as more impoverished simply because they have more residents. I retained ACS margins of error and used moe_prop() to calculate the margin of error for the poverty rate. Dimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate."
+    "text": "Methods note\nI used 2024 American Community Survey (ACS) 5-year estimates for Texas counties. I identified these ACS variables using load_variables(2024, \"acs5\"). I mapped median household income (table B19013_001) and calculated the poverty rate as the number of people below poverty (B17001_002) divided by the poverty universe (B17001_001). Using a rate rather than a raw count avoids treating larger counties as more impoverished simply because they have more residents. I retained ACS margins of error and used moe_prop() to calculate the margin of error for the poverty rate. Dimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate."
   },
   {
     "objectID": "teaching.html",

@@ -28,6 +28,18 @@ library(readr)
 options(tigris_use_cache = TRUE)
 ```
 
+## Variable selection
+
+I checked the ACS variable catalog before selecting variables.
+
+```{r}
+vars <- load_variables(2024, "acs5")
+
+vars |>
+  filter(name %in% c("B19013_001", "B17001_002", "B17001_001")) |>
+  select(name, label)
+```
+  
 ## Data
 
 ```{r}
@@ -147,4 +159,4 @@ Dimmit County and Zapata County have overlapping 90% confidence intervals for th
 
 ## Methods note
 
-I used 2024 American Community Survey (ACS) 5-year estimates for Texas counties. I mapped median household income (table B19013_001) and calculated the poverty rate as the number of people below poverty (B17001_002) divided by the poverty universe (B17001_001). Using a rate rather than a raw count avoids treating larger counties as more impoverished simply because they have more residents. I retained ACS margins of error and used `moe_prop()` to calculate the margin of error for the poverty rate. Dimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate.
+I used 2024 American Community Survey (ACS) 5-year estimates for Texas counties. I identified these ACS variables using `load_variables(2024, "acs5")`. I mapped median household income (table `B19013_001`) and calculated the poverty rate as the number of people below poverty (`B17001_002`) divided by the poverty universe (`B17001_001`). Using a rate rather than a raw count avoids treating larger counties as more impoverished simply because they have more residents. I retained ACS margins of error and used `moe_prop()` to calculate the margin of error for the poverty rate. Dimmit County and Zapata County have overlapping 90% confidence intervals for their estimated poverty rates. Therefore, their apparent order in the ranking should not be treated as a precise difference: sampling uncertainty means either county could plausibly have the higher underlying poverty rate.
