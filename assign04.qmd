@@ -1,0 +1,429 @@
+---
+title: "Assignment 4: Webscraping 1"
+author: "Cecilia Chen"
+format: html
+---
+
+## 0. Permission
+
+```{r}
+#| message: false
+#| warning: false
+
+library(rvest)
+library(dplyr)
+library(readr)
+library(lubridate)
+library(robotstxt)
+library(WDI)
+```
+
+```{r}
+#| warning: false
+
+robotstxt::paths_allowed("https://books.toscrape.com/")
+robotstxt::paths_allowed(
+  "https://en.wikipedia.org/wiki/List_of_countries_by_foreign-exchange_reserves"
+)
+```
+
+Both paths used in this assignment were permitted according to the robots.txt checks.
+
+## 1. Books to Scrape
+
+### Scraping one page
+
+```{r}
+book_page <- read_html(
+  "https://books.toscrape.com/catalogue/page-1.html"
+)
+
+books <- book_page |>
+  html_elements("article.product_pod")
+
+titles <- books |>
+  html_element("h3 a") |>
+  html_attr("title")
+
+prices <- books |>
+  html_element("p.price_color") |>
+  html_text2()
+
+rating_classes <- books |>
+  html_element("p.star-rating") |>
+  html_attr("class")
+
+ratings <- sub("star-rating ", "", rating_classes)
+
+books_df <- data.frame(
+  title = titles,
+  price = prices,
+  rating = ratings
+)
+
+knitr::kable(
+  head(books_df),
+  caption = "First six books"
+)
+```
+
+### Scraping five pages
+
+```{r}
+urls <- paste0(
+  "https://books.toscrape.com/catalogue/page-",
+  1:5,
+  ".html"
+)
+
+scrape_page <- function(page_url) {
+
+  page <- read_html(page_url)
+
+  books <- page |>
+    html_elements("article.product_pod")
+
+  titles <- books |>
+    html_element("h3 a") |>
+    html_attr("title")
+
+  prices <- books |>
+    html_element("p.price_color") |>
+    html_text2()
+
+  rating_classes <- books |>
+    html_element("p.star-rating") |>
+    html_attr("class")
+
+  ratings <- sub("star-rating ", "", rating_classes)
+
+  data.frame(
+    title = titles,
+    price = prices,
+    rating = ratings
+  )
+}
+
+pages <- lapply(urls, scrape_page)
+
+books_5pages <- do.call(rbind, pages)
+
+nrow(books_5pages)
+knitr::kable(
+  books_5pages[c(1, 21, 41, 61, 81), ],
+  caption = "One book from each of the five scraped pages"
+)
+```
+
+The five pages were combined into one dataframe containing the book title, price, and rating.
+
+## 2. Wikipedia Foreign-Exchange Reserves
+
+### Scraping the table
+
+```{r}
+wiki_url <- "https://en.wikipedia.org/wiki/List_of_countries_by_foreign-exchange_reserves"
+
+wiki_page <- read_html(wiki_url)
+
+wiki_tables <- wiki_page |>
+  html_elements("table")
+
+table3 <- wiki_tables[[3]] |>
+  html_table(fill = TRUE)
+
+names(table3) <- c(
+  "country",
+  "continent",
+  "reserves_incl_gold",
+  "change_incl_gold",
+  "reserves_excl_gold",
+  "change_excl_gold",
+  "date",
+  "ref"
+)
+
+reserves_raw <- table3[-c(1, 2), ]
+```
+
+### Cleaning the dataframe
+
+```{r}
+#| warning: false
+
+reserves_clean <- reserves_raw |>
+  select(
+    country,
+    continent,
+    reserves_incl_gold,
+    date
+  )
+
+reserves_clean$reserves_incl_gold <-
+  parse_number(reserves_clean$reserves_incl_gold)
+
+reserves_clean$date <-
+  dmy(reserves_clean$date)
+
+knitr::kable(
+  head(reserves_clean),
+  caption = "Cleaned foreign-exchange reserves data"
+)
+```
+
+The original Wikipedia table contained a multi-row header and several columns that were not needed for the comparison. I removed the two header rows, kept the country, continent, reserves including gold, and reporting date, and converted the reserve values to numeric form.
+
+One observation for Albania reported the date as `31 Apr 2024`, which is not a valid calendar date. I retained the observation but allowed the date to become missing rather than guessing the intended date.
+
+### A second Wikipedia table
+
+I used the Wikipedia table *List of countries and dependencies by population* as a second target.
+
+```{r}
+pop_url <- "https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population"
+
+robotstxt::paths_allowed(pop_url)
+
+pop_page <- read_html(pop_url)
+
+pop_tables <- pop_page |>
+  html_elements("table")
+
+pop_table1 <- pop_tables[[1]] |>
+  html_table(fill = TRUE)
+
+knitr::kable(
+  head(pop_table1),
+  caption = "First six rows of the population table"
+)
+```
+
+```{r}
+pop_clean <- pop_table1 |>
+  filter(Location != "World") |>
+  select(
+    Location,
+    Population,
+    Date
+  ) |>
+  rename(
+    location = Location,
+    population = Population,
+    date = Date
+  )
+
+pop_clean$population <-
+  parse_number(pop_clean$population)
+
+date_type <- ifelse(
+  grepl("^\\d{4}$", pop_clean$date),
+  "year_only",
+  ifelse(
+    grepl("^\\d{1,2} [A-Za-z]{3} \\d{4}$", pop_clean$date),
+    "day_month_year",
+    "other"
+  )
+)
+
+pop_clean$date_raw <- pop_clean$date
+pop_clean$date_precision <- date_type
+
+pop_clean$date_exact <- as.Date(NA)
+
+full_date <- date_type == "day_month_year"
+
+pop_clean$date_exact[full_date] <-
+  dmy(pop_clean$date_raw[full_date])
+
+pop_clean$year <-
+  as.integer(
+    substr(
+      pop_clean$date_raw,
+      nchar(pop_clean$date_raw) - 3,
+      nchar(pop_clean$date_raw)
+    )
+  )
+
+knitr::kable(
+  head(pop_clean),
+  caption = "Cleaned population data"
+)
+```
+
+Changing the target table broke several assumptions from the first scraper. The foreign-exchange table was the third table on its page, contained eight columns, and included two header rows inside the extracted dataframe. In contrast, the population table was the first table, contained six columns, and its first row was a real `World` observation rather than an embedded header.
+
+The date structure also changed. Most population observations reported a complete day-month-year date, but 10 observations reported only a year. I preserved this difference in precision rather than assigning an artificial month or day to year-only observations.
+
+## 3. World Bank WDI Comparison
+
+### Fetching the same quantity from the World Bank
+
+```{r}
+wdi_reserves <- WDI::WDI(
+  country = "all",
+  indicator = "FI.RES.TOTL.CD",
+  start = 2024,
+  end = 2026
+)
+
+wdi_latest <- wdi_reserves |>
+  filter(!is.na(FI.RES.TOTL.CD)) |>
+  group_by(country) |>
+  slice_max(year, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  mutate(
+    reserves_million_usd = FI.RES.TOTL.CD / 1e6
+  )
+```
+
+The WDI indicator is reported in current US dollars, while the Wikipedia table reports reserves in US$ millions. I therefore divided the WDI values by one million so that the two sources use the same unit.
+
+```{r}
+real_countries <- WDI::WDI_data$country |>
+  filter(region != "Aggregates") |>
+  select(iso3c)
+
+wdi_countries <- wdi_latest |>
+  semi_join(real_countries, by = "iso3c")
+```
+
+World Bank regional and other aggregate observations were removed so that the comparison only used country-level entities.
+
+### Matching country names
+
+```{r}
+wiki_for_join <- reserves_clean |>
+  mutate(
+    country_wdi = trimws(sub("\\s*\\*$", "", country)),
+    country_wdi = recode(
+      country_wdi,
+      "Russia" = "Russian Federation",
+      "Hong Kong" = "Hong Kong SAR, China",
+      "South Korea" = "Korea, Rep.",
+      "Turkey" = "Turkiye",
+      "Czech Republic" = "Czechia",
+      "Vietnam" = "Viet Nam",
+      "Egypt" = "Egypt, Arab Rep.",
+      "Iran" = "Iran, Islamic Rep.",
+      "Macau" = "Macao SAR, China",
+      "Ivory Coast" = "Cote d'Ivoire",
+      "North Korea" = "Korea, Dem. People's Rep.",
+      "Slovakia" = "Slovak Republic",
+      "Venezuela" = "Venezuela, RB",
+      "Brunei" = "Brunei Darussalam",
+      "Kyrgyzstan" = "Kyrgyz Republic",
+      "Bahamas" = "Bahamas, The",
+      "Laos" = "Lao PDR",
+      "Curaçao" = "Curacao",
+      "Cape Verde" = "Cabo Verde",
+      "Gambia" = "Gambia, The",
+      "Palestine" = "West Bank and Gaza",
+      "Democratic Republic of the Congo" = "Congo, Dem. Rep.",
+      "Republic of the Congo" = "Congo, Rep.",
+      "Syria" = "Syrian Arab Republic",
+      "Federated States of Micronesia" = "Micronesia, Fed. Sts.",
+      "Yemen" = "Yemen, Rep.",
+      "São Tomé and Príncipe" = "Sao Tome and Principe",
+      "Saint Kitts and Nevis" = "St. Kitts and Nevis",
+      "Saint Lucia" = "St. Lucia",
+      "Saint Vincent and the Grenadines" =
+        "St. Vincent and the Grenadines",
+      "Somalia" = "Somalia, Fed. Rep."
+    )
+  )
+
+comparison <- wiki_for_join |>
+  left_join(
+    wdi_countries |>
+      select(
+        country_wdi = country,
+        year,
+        reserves_million_usd
+      ),
+    by = "country_wdi"
+  )
+```
+
+Country names differed between Wikipedia and the World Bank, so several names had to be standardized before joining the two datasets. Some Wikipedia observations still had no recent WDI value and were excluded from the numerical comparison.
+
+### Comparing the two sources
+
+```{r}
+matched_comparison <- comparison |>
+  filter(!is.na(reserves_million_usd)) |>
+  mutate(
+    difference_million =
+      reserves_incl_gold - reserves_million_usd,
+    percent_difference =
+      100 * difference_million / reserves_million_usd,
+    wikipedia_year = year(date),
+    same_vintage = wikipedia_year == year
+  )
+
+comparison_summary <- data.frame(
+  measure = c(
+    "Matched observations",
+    "Different calendar year",
+    "Same calendar year",
+    "Missing Wikipedia date"
+  ),
+  count = c(
+    nrow(matched_comparison),
+    sum(matched_comparison$same_vintage == FALSE, na.rm = TRUE),
+    sum(matched_comparison$same_vintage == TRUE, na.rm = TRUE),
+    sum(is.na(matched_comparison$same_vintage))
+  )
+)
+
+knitr::kable(
+  comparison_summary,
+  caption = "Summary of matched Wikipedia and WDI observations"
+)
+```
+
+The join produced 163 observations with values from both sources. Of these, 121 observations used different calendar-year vintages, 41 used the same calendar year, and one Wikipedia observation had a missing date.
+
+```{r}
+same_year_differences <- matched_comparison |>
+  filter(same_vintage == TRUE) |>
+  mutate(
+    abs_percent_difference = abs(percent_difference)
+  ) |>
+  arrange(desc(abs_percent_difference)) |>
+  select(
+    country,
+    reserves_incl_gold,
+    date,
+    year,
+    reserves_million_usd,
+    percent_difference
+  ) |>
+  head(15)
+
+knitr::kable(
+  same_year_differences,
+  caption = "Largest percentage differences when both sources use the same calendar year",
+  digits = 2
+)
+```
+
+Wikipedia reports a country-specific last-reported date, while the WDI observations returned by this query were annual values from 2024 or 2025. Therefore, many differences between the two sources can be explained by different reporting vintages.
+
+However, substantial differences remained even when both observations came from the same calendar year. For example, South Sudan, São Tomé and Príncipe, Gabon, North Macedonia, and the United States showed large differences. This suggests that reporting vintage alone does not explain all discrepancies; source definitions, reporting practices, and data quality may also contribute.
+
+### When is scraping the right tool?
+
+Scraping is appropriate when useful data are available on a web page but no usable API or structured download exists. When a documented API or bulk dataset is available, I would generally prefer it because it provides a more stable and reproducible interface than relying on webpage structure.
+
+## 4. Data Plan
+
+My research interest is how generative AI affects students' information-seeking and evaluation behavior. For a web-based data collection project, I would collect public YouTube videos and comments related to students' use of generative AI for studying, information searching, and academic work. YouTube is a useful source because students and educators publicly discuss how they use tools such as ChatGPT, what kinds of information they rely on, and how they evaluate AI-generated information. I would focus on videos and comments explicitly related to studying, research, fact-checking, or academic use of generative AI rather than general AI content.
+
+I would use the official YouTube Data API rather than scraping YouTube webpages. Before collecting data, I would review YouTube's Terms of Service and API policies to make sure that the planned collection and storage are permitted. Because YouTube provides structured access to public information through an API, scraping the HTML pages would not be necessary for this project. The API is also preferable because its fields are documented and less dependent on the visual structure of webpages.
+
+I would begin with a defined set of search terms, such as "ChatGPT studying," "AI for research," and "students using ChatGPT." I would first retrieve a limited set of relevant video IDs and then collect metadata and available public comments for those videos. Because the YouTube Data API uses a quota system, I would avoid repeatedly making unnecessary search requests. I would save retrieved video IDs and raw data locally and reuse these cached files during later stages of the project.
+
+At the pilot stage, I would keep the collection relatively small, with dozens of videos and potentially several thousand comments. I would collect the data in batches and record the date of collection, search terms, video IDs, and API parameters so that the process can be reproduced. Raw API data would be stored separately from cleaned analysis data.
+
+Possible failures include changes to API fields, deleted or unavailable videos, disabled or deleted comments, and changes in search results over time. I would detect these problems by checking the number of returned records, expected variable names, missing values, and API error messages each time the script runs. I would also keep a small set of known video IDs as a validation sample so that unexpected changes in API output can be detected.
+
