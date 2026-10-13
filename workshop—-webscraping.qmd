@@ -1,0 +1,636 @@
+---
+title: "Web Scraping Workshop"
+subtitle: "Static HTML, Dynamic Websites, and JSON APIs"
+author: "Sixi Chen"
+editor: source
+execute:
+  echo: true
+  warning: false
+  message: false
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show R Code"
+    df-print: paged
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(tidyverse)
+library(rvest)
+library(polite)
+library(robotstxt)
+library(httr2)
+library(knitr)
+
+# Read previously collected data
+books_raw <- readr::read_csv(
+  "data/books_raw.csv",
+  show_col_types = FALSE
+)
+
+quotes <- readr::read_csv(
+  "data/quotes.csv",
+  show_col_types = FALSE
+)
+```
+
+## Introduction
+
+This workshop explores two approaches to collecting web data in R.
+
+**Block A** uses `polite` and `rvest` to collect book information from static HTML pages.
+
+**Block B** examines a JavaScript-rendered website and uses an API to retrieve structured JSON data.
+
+The main objectives are to understand how web data are generated, transform them into tidy dataframes, and validate the collected records.
+
+Raw data were cached locally so that the report can be reproduced without repeatedly requesting the websites.
+
+---
+
+# Block A: Static Web Scraping
+
+## A1. Check Access and Establish a Session
+
+The website [Books to Scrape](https://books.toscrape.com/) is designed for practicing web scraping.
+
+Before collecting data, the crawler checks the site's robots.txt rules and establishes a polite session with a five-second delay between requests.
+
+```{r}
+#| eval: false
+
+robotstxt::paths_allowed(
+  "https://books.toscrape.com/catalogue/"
+)
+
+session <- polite::bow(
+  "https://books.toscrape.com/",
+  user_agent = "EPPS6302 student workshop",
+  delay = 5
+)
+
+session
+```
+
+The `polite` package helps manage access to the website while respecting its crawling rules and request intervals.
+
+Checking robots.txt is an important step, although it does not replace reviewing a website's Terms of Service.
+
+## A2. Parse the HTML
+
+The next step extracts individual book records from the HTML document.
+
+```{r}
+#| eval: false
+
+parse_books <- function(pg) {
+
+  pods <- html_elements(
+    pg,
+    "article.product_pod"
+  )
+
+  tibble(
+    title = pods |>
+      html_element("h3 a") |>
+      html_attr("title"),
+
+    price = pods |>
+      html_element(".price_color") |>
+      html_text2(),
+
+    rating = pods |>
+      html_element(".star-rating") |>
+      html_attr("class"),
+
+    stock = pods |>
+      html_element(".availability") |>
+      html_text2()
+  )
+}
+
+pg1 <- polite::nod(
+  session,
+  "catalogue/page-1.html"
+) |>
+  polite::scrape()
+
+books1 <- parse_books(pg1)
+
+books1
+```
+
+The CSS selector `article.product_pod` identifies each book container. Other selectors extract the book title, price, rating, and availability.
+
+The output is a tibble in which each row represents one book.
+
+## A3. Clean the Data
+
+The original HTML contains prices and ratings as text.
+
+These values need to be converted into appropriate data types before analysis.
+
+```{r}
+stars <- c(
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five"
+)
+
+clean_books <- function(df) {
+
+  df |>
+    mutate(
+      price = readr::parse_number(price),
+
+      rating = match(
+        stringr::str_remove(rating, "star-rating "),
+        stars
+      ),
+
+      in_stock = stringr::str_detect(
+        stock,
+        "In stock"
+      )
+    ) |>
+    select(-stock)
+}
+
+books <- clean_books(books_raw)
+```
+
+After cleaning:
+
+- `price` is numeric.
+- `rating` is an integer from 1 to 5.
+- `in_stock` is a logical variable (`TRUE` or `FALSE`).
+
+## A4. Collect All 50 Pages
+
+The function below requests a page, extracts its book records, and adds the page number.
+
+```{r}
+#| eval: false
+
+get_page <- function(i) {
+
+  polite::nod(
+    session,
+    paste0("catalogue/page-", i, ".html")
+  ) |>
+    polite::scrape() |>
+    parse_books() |>
+    dplyr::mutate(page = i)
+}
+
+books_raw <- purrr::map(
+  1:50,
+  get_page
+) |>
+  dplyr::bind_rows()
+
+dir.create(
+  "data",
+  showWarnings = FALSE
+)
+
+readr::write_csv(
+  books_raw,
+  "data/books_raw.csv"
+)
+```
+
+The `map()` function applies `get_page()` to all 50 page numbers.
+
+The resulting list of tibbles is combined into a single dataframe using `bind_rows()`.
+
+The raw dataset is saved as a CSV file to avoid repeated requests during analysis and report rendering.
+
+## A5. Data Validation
+
+Data collection is not complete simply because the code runs without errors.
+
+The dataset should be checked for missing values, appropriate data types, and expected record counts.
+
+```{r}
+#| echo: false
+
+book_validation <- tibble(
+  `Quality Check` = c(
+    "Total book records",
+    "Pages collected",
+    "Missing titles",
+    "Missing prices",
+    "Missing ratings",
+    "Unique titles"
+  ),
+  Result = c(
+    nrow(books),
+    dplyr::n_distinct(books$page),
+    sum(is.na(books$title)),
+    sum(is.na(books$price)),
+    sum(is.na(books$rating)),
+    dplyr::n_distinct(books$title)
+  )
+)
+
+knitr::kable(
+  book_validation,
+  caption = "Table 1. Book Data Quality Checks",
+  align = c("l", "c")
+)
+```
+
+### Records per Page
+
+Each page is expected to contain 20 books.
+
+```{r}
+#| echo: false
+
+page_check <- books |>
+  count(page, name = "records") |>
+  summarise(
+    `Pages Checked` = n(),
+    `Minimum Records per Page` = min(records),
+    `Maximum Records per Page` = max(records),
+    `Pages with 20 Records` = sum(records == 20)
+  )
+
+knitr::kable(
+  page_check,
+  caption = "Table 2. Pagination Validation",
+  align = "c"
+)
+```
+
+This check helps identify missing or incomplete pages that might otherwise go unnoticed.
+
+## A6. Descriptive Analysis
+
+We compare the average book prices across the five star-rating categories.
+
+```{r}
+#| echo: false
+
+book_summary <- books |>
+  group_by(rating) |>
+  summarise(
+    `Average Price (£)` = round(
+      mean(price, na.rm = TRUE),
+      2
+    ),
+    `Number of Books` = n(),
+    .groups = "drop"
+  ) |>
+  rename(
+    `Star Rating` = rating
+  )
+
+knitr::kable(
+  book_summary,
+  caption = "Table 3. Average Book Prices by Star Rating",
+  align = "c"
+)
+```
+
+### Book Price Distribution
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.5
+
+ggplot(
+  books,
+  aes(
+    x = factor(rating),
+    y = price
+  )
+) +
+  geom_boxplot(
+    fill = "#AFC6DF",
+    color = "#35465C",
+    alpha = 0.85
+  ) +
+  labs(
+    title = "Book Prices by Star Rating",
+    x = "Star Rating",
+    y = "Price (£)",
+    caption = "Source: Books to Scrape"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+The average prices are relatively similar across rating categories. These results are descriptive and do not establish a causal relationship between ratings and prices.
+
+## A7. Reflection
+
+The most fragile part of the scraping process is the dependence on CSS selectors.
+
+For example, if the website changes the class name `product_pod`, the selector `article.product_pod` may no longer identify book records correctly.
+
+This could produce missing observations without an obvious error message.
+
+Checking the number of records per page and caching the raw data help make the collection process more reliable and reproducible.
+
+---
+
+# Block B: Dynamic Web Scraping
+
+## B1. Diagnose the Website
+
+Some websites include their content directly in the HTML returned by the server.
+
+Others use JavaScript to load content after the initial page has opened.
+
+The two versions of Quotes to Scrape illustrate this difference:
+
+- [Regular HTML page](https://quotes.toscrape.com/)
+- [JavaScript-rendered page](https://quotes.toscrape.com/js/)
+
+```{r}
+#| eval: false
+
+count_quotes <- function(url) {
+
+  read_html(url) |>
+    html_elements(".quote") |>
+    length()
+}
+
+count_quotes(
+  "https://quotes.toscrape.com/"
+)
+
+count_quotes(
+  "https://quotes.toscrape.com/js/"
+)
+```
+
+The expected results are 10 quotes on the regular HTML page and 0 on the JavaScript-rendered page.
+
+The difference illustrates that `read_html()` reads the initial HTML but does not execute JavaScript.
+
+## B2. Find the API
+
+Instead of relying immediately on browser automation, we can inspect the network requests made by the website and identify its data endpoint.
+
+For this exercise, the API endpoint is:
+
+`https://quotes.toscrape.com/api/quotes?page=1`
+
+The following function requests one page of JSON data.
+
+```{r}
+get_quotes <- function(p) {
+
+  httr2::request(
+    "https://quotes.toscrape.com/api/quotes"
+  ) |>
+    httr2::req_url_query(page = p) |>
+    httr2::req_user_agent(
+      "EPPS6302 student workshop"
+    ) |>
+    httr2::req_retry(max_tries = 3) |>
+    httr2::req_perform() |>
+    httr2::resp_body_json()
+}
+```
+
+```{r}
+#| eval: false
+
+j <- get_quotes(1)
+
+names(j)
+
+length(j$quotes)
+
+j$has_next
+```
+
+The API response includes the following fields:
+
+- `has_next`: whether another page is available.
+- `page`: the current page number.
+- `quotes`: the quote records.
+- `tag`: the current tag selection.
+- `top_ten_tags`: the website's popular tags.
+
+Unlike the HTML scraping approach, the API returns structured JSON data.
+
+## B3. Rectangle the JSON
+
+The API response contains nested lists.
+
+For example, each quote includes author information, tags, and quote text. The author information itself contains several fields.
+
+The following function converts this nested structure into a rectangular dataframe.
+
+```{r}
+rectangle <- function(quote_list) {
+
+  tibble(q = quote_list) |>
+    tidyr::unnest_wider(q) |>
+    tidyr::hoist(
+      author,
+      author_name = "name",
+      author_slug = "slug"
+    ) |>
+    mutate(
+      tags = purrr::map_chr(
+        tags,
+        \(x) paste(
+          unlist(x),
+          collapse = "; "
+        )
+      )
+    ) |>
+    select(
+      text,
+      author_name,
+      author_slug,
+      tags
+    )
+}
+```
+
+```{r}
+#| eval: false
+
+quotes_page1 <- rectangle(j$quotes)
+
+glimpse(quotes_page1)
+
+nrow(quotes_page1)
+
+names(quotes_page1)
+```
+
+The transformation has three important steps:
+
+1. `unnest_wider()` expands the quote fields into separate columns.
+2. `hoist()` extracts selected values from the nested author list.
+3. `map_chr()` converts each quote's tags into a single character value.
+
+The final dataframe has one row per quote and separate columns for the text, author name, author identifier, and tags.
+
+## B4. Collect All Quotes
+
+Rather than assuming a fixed number of pages, the API's `has_next` field determines when data collection should stop.
+
+```{r}
+#| eval: false
+
+pages <- list()
+p <- 1
+
+repeat {
+
+  pages[[p]] <- get_quotes(p)
+
+  if (!pages[[p]]$has_next) {
+    break
+  }
+
+  p <- p + 1
+}
+
+quotes <- purrr::map(
+  pages,
+  "quotes"
+) |>
+  purrr::list_flatten() |>
+  rectangle()
+
+dir.create(
+  "data",
+  showWarnings = FALSE
+)
+
+readr::write_csv(
+  quotes,
+  "data/quotes.csv"
+)
+```
+
+The process retrieves each page, keeps the quote records, and combines them into one tibble.
+
+The collected data are cached as `data/quotes.csv`.
+
+### Data Validation
+
+```{r}
+#| echo: false
+
+quote_validation <- tibble(
+  `Quality Check` = c(
+    "Total quote records",
+    "Missing quote texts",
+    "Missing author names",
+    "Unique quote texts",
+    "Unique authors"
+  ),
+  Result = c(
+    nrow(quotes),
+    sum(is.na(quotes$text)),
+    sum(is.na(quotes$author_name)),
+    dplyr::n_distinct(quotes$text),
+    dplyr::n_distinct(quotes$author_name)
+  )
+)
+
+knitr::kable(
+  quote_validation,
+  caption = "Table 4. Quote Data Quality Checks",
+  align = c("l", "c")
+)
+```
+
+### Sample Quotes
+
+The following table displays five records from the collected dataset.
+
+```{r}
+#| echo: false
+
+quote_sample <- quotes |>
+  transmute(
+    Author = author_name,
+    Quote = text
+  ) |>
+  slice_head(n = 5)
+
+knitr::kable(
+  quote_sample,
+  caption = "Table 5. Sample Quotes from the API",
+  align = c("l", "l")
+)
+```
+
+The full dataset is retained in the CSV file. Displaying a sample keeps the report readable without discarding observations.
+
+## B5. Drive a Browser
+
+Browser automation provides an alternative for accessing content loaded through JavaScript.
+
+The `read_html_live()` function opens a live browser session and allows R to inspect the rendered page.
+
+```{r}
+#| eval: false
+
+live_page <- rvest::read_html_live(
+  "https://quotes.toscrape.com/js/"
+)
+
+live_page |>
+  html_elements(".quote") |>
+  length()
+```
+
+This approach is useful when data cannot be accessed through a suitable API or static HTML.
+
+However, browser automation generally requires more resources and is more sensitive to page-loading behavior.
+
+## B6. Reflection: API vs. Browser Automation
+
+The two collection methods operate at different levels.
+
+| Feature | Direct API | Browser Automation |
+|:---|:---|:---|
+| Data source | JSON endpoint | Rendered browser DOM |
+| Main tools | `httr2`, `tidyr` | `rvest`, `chromote` |
+| JavaScript execution | Not required | Required |
+| Data preparation | JSON rectangling | HTML parsing |
+| Typical resource use | Lower | Higher |
+| Common failure risks | Endpoint changes, rate limits | Page changes, loading delays |
+
+The API is preferable for this exercise because it provides structured data directly.
+
+The browser approach remains useful when the required information is only available after JavaScript execution.
+
+Both approaches require attention to data provenance, collection limits, and possible missing observations.
+
+---
+
+# Conclusion
+
+This workshop demonstrates that web data collection depends on understanding how a website generates and delivers its data.
+
+Block A extracts records from static HTML using CSS selectors. Block B retrieves structured JSON through an API and transforms nested records into a dataframe.
+
+The two approaches produce analyzable datasets, but they rely on different data-generating processes and have different potential failure points.
+
+Caching the collected data and validating the resulting tables help make the workflow more transparent, efficient, and reproducible.

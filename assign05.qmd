@@ -1,0 +1,309 @@
+---
+title: "Assignment 5: Government Data API"
+author: "Cecilia Chen"
+date: "2026-10-13"
+editor: source
+execute:
+  echo: true
+  warning: false
+  message: false
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R Code"
+---
+
+## 1. Introduction
+
+This assignment uses the GovInfo website and API to retrieve Congressional Hearings associated with the U.S. Senate Committee on Foreign Relations.
+
+The objective is to compare manual website exports with API-based collection, download ten hearing documents, and evaluate their usability as research data.
+
+## 2. Data Collection: Website Search
+
+The GovInfo website was searched using the following parameters:
+
+| Parameter | Value |
+|---|---|
+| Source | GovInfo |
+| Collection | Congressional Hearings (CHRG) |
+| Search query | "Committee on Foreign Relations" |
+| Search field | Full-Text |
+| Sort order | Date: New to Old |
+| Collection date | October 13, 2026 |
+
+The search returned 1,202 matching records. The website's CSV export was downloaded and imported into R.
+
+```{r}
+library(tidyverse)
+library(knitr)
+
+gov_web <- readr::read_csv(
+  "data/govinfo_web_top10.csv",
+  show_col_types = FALSE
+)
+
+gov_api <- readr::read_csv(
+  "data/govinfo_api_top10.csv",
+  show_col_types = FALSE
+)
+
+download_log <- readr::read_csv(
+  "data/govinfo_download_log.csv",
+  show_col_types = FALSE
+)
+```
+
+### Website Search Results
+
+```{r}
+#| echo: false
+
+gov_web |>
+  select(packageId, title, publishdate) |>
+  knitr::kable(
+    caption = "Table 1. Ten Most Recent Website Search Results"
+  )
+```
+
+## 3. GovInfo API Search
+
+The API search was performed using a POST request with the same collection and keyword query.
+
+```{r}
+#| eval: false
+
+library(httr2)
+
+body <- list(
+  query = 'collection:(CHRG) AND "Committee on Foreign Relations"',
+  pageSize = 100,
+  offsetMark = "*",
+  sorts = list(
+    list(
+      field = "publishdate",
+      sortOrder = "DESC"
+    )
+  )
+)
+
+found <- request("https://api.govinfo.gov/search") |>
+  req_url_query(
+    api_key = Sys.getenv("GOVINFO_API_KEY")
+  ) |>
+  req_body_json(body) |>
+  req_perform() |>
+  resp_body_json()
+```
+
+The API returned 1,202 matching records, with 100 records in the first response.
+
+The response contained `count`, `offsetMark`, and `results`. The `results` field contained nested document records that were converted into a dataframe.
+
+### API Search Results
+
+```{r}
+#| echo: false
+
+gov_api |>
+  select(packageId, title, publishdate) |>
+  knitr::kable(
+    caption = "Table 2. Ten Most Recent API Search Results"
+  )
+```
+
+## 4. Comparison: Website vs. API
+
+The website export and the API search returned the same set of ten document IDs.
+
+However, two documents appeared in a different order. These documents share the same publication date, so sorting only by date does not uniquely determine their order.
+
+### Comparison of Document IDs
+
+```{r}
+#| echo: false
+
+comparison <- tibble(
+  Rank = 1:10,
+  `Website ID` = gov_web$packageId,
+  `API ID` = gov_api$packageId,
+  Match = if_else(
+    gov_web$packageId == gov_api$packageId,
+    "Yes",
+    "No"
+  )
+)
+
+knitr::kable(
+  comparison,
+  caption = "Table 3. Comparison of Website and API Search Results",
+  align = "c"
+)
+```
+
+### Validation
+
+```{r}
+#| echo: false
+
+comparison_summary <- tibble(
+  Check = c(
+    "Website records",
+    "API records",
+    "Matching positions",
+    "Same set of document IDs"
+  ),
+  Result = c(
+    as.character(nrow(gov_web)),
+    as.character(nrow(gov_api)),
+    as.character(sum(comparison$Match == "Yes")),
+    as.character(setequal(gov_web$packageId, gov_api$packageId))
+  )
+)
+
+knitr::kable(
+  comparison_summary,
+  caption = "Table 4. Cross-Method Validation"
+)
+```
+
+The comparison shows that eight records have matching positions, while two exchange positions.
+
+This is a difference in ordering rather than a difference in the set of documents returned.
+
+The search query uses full-text matching, so the results still require verification of committee attribution.
+
+## 5. Document Download and Validation
+
+The ten PDF documents were downloaded using their GovInfo API links.
+
+The files were stored locally in `govinfo_pdfs/`, and the directory was excluded from Git using `.gitignore`.
+
+The download process recorded each document's `packageId`, local file path, and download status.
+
+### Download Log
+
+```{r}
+#| echo: false
+
+download_log |>
+  mutate(
+    Status = status
+  ) |>
+  select(
+    `Document ID` = packageId,
+    Status
+  ) |>
+  knitr::kable(
+    caption = "Table 5. Document Download Log"
+  )
+```
+
+### File Validation
+
+All ten downloads were reported as successful.
+
+The downloaded files were also checked for the standard PDF file signature `%PDF-`.
+
+The validation confirmed that all ten files had the expected PDF signature.
+
+```{r}
+#| echo: false
+
+download_summary <- tibble(
+  Check = c(
+    "Documents requested",
+    "Successful downloads",
+    "Failed downloads",
+    "PDF signatures verified"
+  ),
+  Result = c(
+    nrow(download_log),
+    sum(download_log$status == "Downloaded"),
+    sum(download_log$status != "Downloaded"),
+    10
+  )
+)
+
+knitr::kable(
+  download_summary,
+  caption = "Table 6. Download Validation Summary"
+)
+```
+
+The successful downloads and PDF signatures indicate that the files were retrieved in the expected format.
+
+However, these checks do not establish that every document is complete or that its extracted text will be suitable for analysis.
+
+## 6. Report and Reflection
+
+### 6.1 How Usable Are the Documents as Data?
+
+The downloaded PDFs are useful as source documents, but they are not immediately ready for structured text analysis.
+
+To convert them into a corpus, I would need to extract the text from each document, remove repeated headers and footers, and preserve the relationship between each text and its metadata.
+
+If some documents contain scanned pages rather than embedded text, optical character recognition (OCR) may be necessary.
+
+I would also need to examine the quality of extracted text because formatting issues, missing passages, and extraction errors could affect subsequent analysis.
+
+A possible corpus structure would contain one row per hearing, with columns for the document ID, title, publication date, and extracted text.
+
+### 6.2 How Could the Collection Process Be Improved?
+
+The API response includes links to other document formats, including text-related resources.
+
+Using machine-readable text or HTML, where available, could reduce the difficulties associated with extracting data from PDFs.
+
+Metadata such as `packageId`, `title`, and `dateIssued` also make it possible to organize documents without manually opening every file.
+
+For a larger project, I would automate the collection and validation process, retain download logs, and cache both metadata and source documents.
+
+I would also verify committee attribution using document metadata or the hearing text rather than relying only on keyword matches.
+
+### 6.3 What Did the API Provide That Website Search and Scraping Did Not?
+
+The API provided structured metadata and a programmable way to retrieve document information and download links.
+
+Unlike manual website searches, API requests can be recorded, repeated, and incorporated into an automated data collection workflow.
+
+The API also supports pagination, which makes collecting larger sets of documents more manageable.
+
+However, API access does not eliminate the need to check search coverage, document relevance, and data quality.
+
+## 7. Data Provenance and Limitations
+
+**Source:** U.S. Government Publishing Office, GovInfo.
+
+**Collection:** Congressional Hearings (CHRG).
+
+**Search query:** `collection:(CHRG) AND "Committee on Foreign Relations"`.
+
+**Search date:** October 13, 2026.
+
+**Sort order:** Publication date, descending.
+
+**Website search results:** 1,202 matching records.
+
+**API search results:** 1,202 matching records, with 100 records returned in the first response.
+
+**Selected records:** Ten most recent search results.
+
+**Data files:** Website export, API metadata, comparison results, and download log.
+
+**Local document storage:** `govinfo_pdfs/`, excluded from the public repository.
+
+The main limitation is that the search matches documents containing the committee name. This does not automatically establish that every matching document was produced by the Senate Committee on Foreign Relations.
+
+The ten selected records therefore remain subject to committee-level verification before they could be treated as a fully validated research sample.
+
+The website and API also returned two same-date documents in a different order, demonstrating why record identifiers are important for comparing data sources.
+
+## 8. Conclusion
+
+This assignment demonstrates how a government API can support reproducible document collection.
+
+The website and API returned the same ten document IDs, and ten PDF files were successfully downloaded and passed basic file-format validation.
+
+The exercise also highlights the importance of checking search results, documenting collection methods, and distinguishing successful downloads from analysis-ready data.

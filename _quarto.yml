@@ -16,6 +16,9 @@ website:
           - assign02.qmd
           - assign03.qmd
           - assign04.qmd
+          - assign05.qmd          
+          - href: workshop_scraping.qmd
+            text: Web Scraping Workshop
       - href: cv.qmd
         text: CV
     right:
