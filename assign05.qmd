@@ -1,7 +1,6 @@
 ---
 title: "Assignment 5: Government Data API"
 author: "Cecilia Chen"
-date: "2026-10-13"
 editor: source
 execute:
   echo: true
