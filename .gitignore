@@ -10,3 +10,8 @@
 # API keys and enviroment variables
 .Renviron
 govinfo_pdfs/
+# Assignment data not to publish
+data/cpd_xi_htm/
+data/youtube/
+*_cache/
+.RDataTmp

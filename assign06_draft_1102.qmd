@@ -1,0 +1,90 @@
+---
+title: "assign06"
+editor: visual
+---
+
+library(quanteda)
+library(quanteda.textmodels)
+library(quanteda.textplots)
+library(readr)
+library(ggplot2)
+
+summit \<- read_csv("[https://raw.githubusercontent.com/datageneration/datamethods/master/textanalytics/summit_11162021.csv")](https://raw.githubusercontent.com/datageneration/datamethods/master/textanalytics/summit_11162021.csv"))
+
+dim(summit) \# 几行几列 
+names(summit) \# 有哪些列
+
+table(summit$is_retweet)                          # 转推有多少条？
+range(summit$created_at)                          # 时间窗口从哪到哪？
+head(sort(table(summit$lang), decreasing = TRUE)) # 主要是什么语言？
+
+sum_twt <- summit$text
+toks <- tokens(sum_twt)
+sumtwtdfm <- dfm(toks)
+
+class(sum_twt)
+class(toks)
+sumtwtdfm
+
+tweet_dfm <- tokens(sum_twt, remove_punct = TRUE) |>
+  dfm()
+
+topfeatures(tweet_dfm, 20)
+tweet_dfm2 <- dfm_remove(tweet_dfm, stopwords("en"))
+topfeatures(tweet_dfm2, 30)
+
+tag_dfm <- dfm_select(tweet_dfm, pattern = "#*")
+toptag <- names(topfeatures(tag_dfm, 50))
+head(toptag, 10)
+
+tag_fcm <- fcm(tag_dfm)
+topgat_fcm <- fcm_select(tag_fcm, pattern = toptag)
+textplot_network(topgat_fcm, min_freq = 50, edge_alpha = 0.8, edge_size = 1)
+
+user_dfm <- dfm_select(tweet_dfm, pattern = "@*")
+topuser <- names(topfeatures(user_dfm, 50))
+head(topuser, 20)
+
+user_fcm <- fcm(user_dfm)
+user_fcm <- fcm_select(user_fcm, pattern = topuser)
+textplot_network(user_fcm, min_freq = 20, edge_color = "firebrick", edge_alpha = 0.8, edge_size = 1)
+
+sum_lsa <- textmodel_lsa(tweet_dfm2, nd = 4)
+head(sum_lsa$docs)              # 每条推文在 4 个维度上的得分
+
+# 看每个维度上权重最高的词，帮助理解它代表什么
+for (i in 1:4) {
+  cat("Dimension", i, ":\n")
+  print(head(sort(sum_lsa$features[, i], decreasing = TRUE), 10))
+}
+
+library(quanteda.textstats)
+
+inaug <- corpus_subset(data_corpus_inaugural, Year >= 1945)
+
+ndoc(inaug)                               # 一共几篇？
+tail(docvars(inaug), 3)                   # 最新的是哪几篇？
+table(docvars(inaug, "Party"))            # 两党各几篇？
+
+inaug_toks <- tokens(inaug, remove_punct = TRUE)
+inaug_dfm  <- dfm(inaug_toks)
+
+stats <- data.frame(
+  Year      = docvars(inaug, "Year"),
+  President = docvars(inaug, "President"),
+  Party     = docvars(inaug, "Party"),
+  length    = ntoken(inaug_toks),
+  TTR       = textstat_lexdiv(inaug_dfm, measure = "TTR")$TTR,
+  Flesch    = textstat_readability(inaug, measure = "Flesch")$Flesch
+)
+head(stats)
+
+library(tidyr)
+
+stats |>
+  pivot_longer(c(length, TTR, Flesch), names_to = "measure", values_to = "value") |>
+  ggplot(aes(x = Year, y = value)) +
+  geom_line(color = "grey60") +
+  geom_point(aes(color = Party)) +
+  facet_wrap(~ measure, scales = "free_y", ncol = 1) +
+  theme_bw()

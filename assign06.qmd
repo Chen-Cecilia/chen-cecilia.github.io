@@ -1,0 +1,357 @@
+---
+title: "Assignment 6: Text Analytics with quanteda"
+author: "Cecilia Chen"
+date: "November 2026"
+format:
+  html:
+    toc: true
+    code-fold: show
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+library(quanteda)
+library(quanteda.textstats)
+library(quanteda.textplots)
+library(quanteda.textmodels)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+```
+
+This assignment reads three kinds of text with quanteda: tweets posted during the November 2021 Biden–Xi virtual summit (the public), presidential documents that mention Xi Jinping (the government), and US presidential inaugural addresses since 1945. Each corpus was produced by a different data-generating process, and that process decides what the results below can mean.
+
+# Part 1. The public: summit tweets
+
+## The data
+
+```{r}
+#| label: summit-read
+#| cache: true
+summit <- read_csv("https://raw.githubusercontent.com/datageneration/datamethods/master/textanalytics/summit_11162021.csv")
+
+dim(summit)
+range(summit$created_at)
+table(summit$is_retweet)
+```
+
+The file holds `r nrow(summit)` tweets with `r ncol(summit)` columns, posted between `r format(min(summit$created_at), "%B %d")` and `r format(max(summit$created_at), "%B %d, %Y")`. The tweets were collected through the Twitter API by keyword during the summit window. That API no longer offers this access, so the dataset is an archive: it cannot be collected again, and we have to trust the choices of whoever collected it.
+
+## Words, hashtags and mentions
+
+```{r}
+#| label: summit-dfm
+sum_twt   <- summit$text
+tweet_dfm <- tokens(sum_twt, remove_punct = TRUE) |> dfm()
+dim(tweet_dfm)
+
+tweet_dfm2 <- dfm_remove(tweet_dfm, stopwords("en"))
+topfeatures(tweet_dfm2, 20)
+```
+
+```{r}
+#| label: summit-hashtags
+#| fig-cap: "Co-occurrence network of the 50 most frequent hashtags"
+tag_dfm   <- dfm_select(tweet_dfm, pattern = "#*")
+toptag    <- names(topfeatures(tag_dfm, 50))
+tag_fcm   <- fcm(tag_dfm) |> fcm_select(pattern = toptag)
+textplot_network(tag_fcm, min_freq = 50, edge_alpha = 0.8, edge_size = 1)
+```
+
+```{r}
+#| label: summit-users
+#| fig-cap: "Co-occurrence network of the 50 most mentioned accounts"
+user_dfm <- dfm_select(tweet_dfm, pattern = "@*")
+topuser  <- names(topfeatures(user_dfm, 50))
+user_fcm <- fcm(user_dfm) |> fcm_select(pattern = topuser)
+textplot_network(user_fcm, min_freq = 20, edge_color = "firebrick", edge_alpha = 0.8, edge_size = 1)
+```
+
+## Latent semantic analysis
+
+```{r}
+#| label: summit-lsa
+#| cache: true
+sum_lsa <- textmodel_lsa(tweet_dfm2, nd = 4)
+head(sum_lsa$docs)
+
+for (i in 1:4) {
+  cat("Dimension", i, ":", names(head(sort(sum_lsa$features[, i], decreasing = TRUE), 10)), "\n")
+}
+```
+
+Several tweets receive identical scores on all four dimensions (for example, the fifth and sixth tweets). They are the same text posted again, mostly retweets. Repeated text means a few voices are counted many times.
+
+## Sentiment: four dictionaries, one set of tweets
+
+```{r}
+#| label: summit-sentiment
+#| cache: true
+#| fig-cap: "The same tweets scored by four sentiment dictionaries"
+library(syuzhet)
+sent <- tibble(
+  syuzhet = get_sentiment(sum_twt, method = "syuzhet"),
+  bing    = get_sentiment(sum_twt, method = "bing"),
+  afinn   = get_sentiment(sum_twt, method = "afinn"),
+  nrc     = get_sentiment(sum_twt, method = "nrc")
+)
+sent |>
+  pivot_longer(everything(), names_to = "method", values_to = "score") |>
+  ggplot(aes(method, score, fill = method)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(x = "Dictionary", y = "Sentiment score") +
+  theme_bw()
+```
+
+All four medians sit near zero, but the spread differs widely: AFINN runs far beyond Bing on both ends. The "sentiment" of the same tweet depends on which dictionary we chose.
+
+# Part 2. The government: presidential documents mentioning Xi
+
+## Collection
+
+The Compilation of Presidential Documents (CPD) on GovInfo was searched through the API for documents mentioning "Xi Jinping" published since 20 January 2021. The search returned 351 documents across four pages of 100. Each document's full text was then downloaded as HTML and cached locally. The code below shows the collection; it is not re-run when the document is rendered.
+
+```{r}
+#| label: cpd-collect
+#| eval: false
+library(httr2)
+
+body <- list(
+  query = 'collection:(CPD) AND "Xi Jinping" AND publishdate:range(2021-01-20,)',
+  pageSize = 100, offsetMark = "*",
+  sorts = list(list(field = "publishdate", sortOrder = "ASC"))
+)
+search_page <- function(body) {
+  request("https://api.govinfo.gov/search") |>
+    req_url_query(api_key = Sys.getenv("GOVINFO_API_KEY")) |>
+    req_body_json(body) |> req_perform() |> resp_body_json()
+}
+
+found <- search_page(body)
+all_results <- found$results
+next_mark <- found$offsetMark
+while (length(all_results) < found$count && !is.null(next_mark)) {
+  body$offsetMark <- next_mark
+  page <- search_page(body)
+  all_results <- c(all_results, page$results)
+  next_mark <- page$offsetMark
+  Sys.sleep(1)
+}
+
+docs <- tibble(
+  packageId = map_chr(all_results, "packageId"),
+  title     = map_chr(all_results, "title"),
+  date      = as.Date(map_chr(all_results, "dateIssued"))
+)
+
+get_cpd <- function(id) {
+  path <- file.path("data/cpd_xi_htm", paste0(id, ".htm"))
+  if (file.exists(path)) return("cached")
+  tryCatch({
+    request(paste0("https://api.govinfo.gov/packages/", id, "/htm")) |>
+      req_url_query(api_key = Sys.getenv("GOVINFO_API_KEY")) |>
+      req_perform(path = path)
+    Sys.sleep(0.5)
+    "ok"
+  }, error = function(e) "error")
+}
+docs$fetch_status <- map_chr(docs$packageId, get_cpd)
+write.csv(docs, "data/cpd_xi_log.csv", row.names = FALSE)
+```
+
+## Checking the collection
+
+```{r}
+#| label: cpd-read
+#| cache: true
+library(rvest)
+docs <- read_csv("data/cpd_xi_log.csv", show_col_types = FALSE)
+
+c(documents = nrow(docs), unique_ids = n_distinct(docs$packageId))
+count(docs, fetch_status)
+range(docs$date)
+
+read_cpd <- function(id) {
+  read_html(file.path("data/cpd_xi_htm", paste0(id, ".htm"))) |> html_text2()
+}
+docs$text  <- map_chr(docs$packageId, read_cpd)
+docs$admin <- ifelse(docs$date < as.Date("2025-01-20"), "Biden", "Trump")
+count(docs, admin)
+```
+
+## Who wrote "Xi Jinping"? The editor and the president
+
+Each CPD document has three layers: what the president said, an editor's note ("In his remarks, he referred to…"), and an index of names and subjects added by the Office of the Federal Register. The editor works like a court historian: recording, annotating and cataloguing the president's words, but not speaking for him. I removed the style header, the editor's note and the index to keep only the president's words.
+
+```{r}
+#| label: cpd-body
+docs$body <- docs$text |>
+  sub("^.*?(Administration of)", "\\1", x = _) |>
+  sub("(N\\s?OTE\\s?:|Categories:).*$", "", x = _)
+
+xi_all  <- kwic(tokens(corpus(docs, docid_field = "packageId", text_field = "text")),
+                pattern = phrase("Xi Jinping"))
+cpd_corp <- corpus(docs, docid_field = "packageId", text_field = "body")
+cpd_toks <- tokens(cpd_corp, remove_punct = TRUE)
+xi_body  <- kwic(cpd_toks, pattern = phrase("Xi Jinping"), window = 15)
+
+tibble(
+  mentions_all_text  = nrow(xi_all),
+  mentions_body_only = nrow(xi_body),
+  docs_selected      = nrow(docs),
+  docs_body_mentions = n_distinct(xi_body$docname)
+)
+```
+
+Of `r nrow(xi_all)` mentions of "Xi Jinping", only `r nrow(xi_body)` appear in what the president said. And only `r n_distinct(xi_body$docname)` of the `r nrow(docs)` documents mention him in the body at all. The other `r nrow(docs) - n_distinct(xi_body$docname)` entered the corpus because the editor listed his name in a note or the index.
+
+## Xi in context
+
+```{r}
+#| label: cpd-kwic
+set.seed(6302)
+as.data.frame(xi_body) |>
+  slice_sample(n = 10) |>
+  select(docname, pre, keyword, post)
+```
+
+## Biden and Trump compared
+
+```{r}
+#| label: cpd-keyness-full
+#| fig-cap: "Keyness on full document text: Trump vs. Biden"
+cpd_admin <- dfm(cpd_toks) |> dfm_remove(stopwords("en")) |> dfm_group(groups = admin)
+textplot_keyness(textstat_keyness(cpd_admin, target = "Trump"), n = 15)
+```
+
+```{r}
+#| label: cpd-keyness-context
+#| fig-cap: "Keyness on the 15 words around each mention of Xi Jinping: Trump vs. Biden"
+ctx_df <- as.data.frame(xi_body)
+ctx_df$admin <- docs$admin[match(ctx_df$docname, docs$packageId)]
+count(ctx_df, admin)
+
+ctx_dfm <- corpus(paste(ctx_df$pre, ctx_df$post), docvars = data.frame(admin = ctx_df$admin)) |>
+  tokens(remove_punct = TRUE) |> tokens_remove(stopwords("en")) |>
+  dfm() |> dfm_group(groups = admin)
+textplot_keyness(textstat_keyness(ctx_dfm, target = "Trump"), n = 10)
+```
+
+## Data note: CPD collection
+
+- **Source.** Compilation of Presidential Documents (CPD), GovInfo, U.S. Government Publishing Office.
+- **Permission.** Public U.S. government works, accessed through the GovInfo API with a personal key stored in `.Renviron` (not shown, not committed).
+- **Query.** `collection:(CPD) AND "Xi Jinping" AND publishdate:range(2021-01-20,)`, sorted by publish date, collected November 7, 2026.
+- **Selection.** Full-text matching, so a document is selected if the name appears anywhere, including the editor's note and index. About half the documents were selected through the editor's text alone.
+- **Gaps.** The CPD records public remarks, not private talks. Speeches are transcribed and edited before publication. Mentions as "President Xi" without "Jinping" are not counted. Raw counts are not rates: the number of documents each administration published is not taken into account.
+- **Files posted.** The collection log (`data/cpd_xi_log.csv`) only. The documents themselves are kept locally and excluded from the repository.
+
+# Part 3. Inaugural addresses since 1945
+
+## Length, lexical diversity, readability
+
+```{r}
+#| label: inaug-stats
+#| fig-height: 7
+inaug <- corpus_subset(data_corpus_inaugural, Year >= 1945)
+tail(docvars(inaug), 3)
+table(docvars(inaug, "Party"))
+
+inaug_toks <- tokens(inaug, remove_punct = TRUE)
+inaug_dfm  <- dfm(inaug_toks)
+
+stats <- data.frame(
+  Year      = docvars(inaug, "Year"),
+  President = docvars(inaug, "President"),
+  Party     = docvars(inaug, "Party"),
+  length    = ntoken(inaug_toks),
+  TTR       = textstat_lexdiv(inaug_dfm, measure = "TTR")$TTR,
+  Flesch    = textstat_readability(inaug, measure = "Flesch")$Flesch
+)
+
+stats |>
+  pivot_longer(c(length, TTR, Flesch), names_to = "measure", values_to = "value") |>
+  ggplot(aes(Year, value)) +
+  geom_line(color = "grey60") +
+  geom_point(aes(color = Party)) +
+  facet_wrap(~ measure, scales = "free_y", ncol = 1) +
+  theme_bw()
+```
+
+The latest address in `data_corpus_inaugural` is 2025-Trump, so no address is missing.
+
+## Keyness by party
+
+```{r}
+#| label: inaug-keyness
+#| fig-cap: "Keyness by party: Democratic vs. Republican presidents"
+inaug_dfm2 <- dfm_remove(inaug_dfm, stopwords("en"))
+dfm_party  <- dfm_group(inaug_dfm2, groups = Party)
+textplot_keyness(textstat_keyness(dfm_party, target = "Democratic"), n = 15)
+```
+
+Is "great" a Republican word or one president's habit?
+
+```{r}
+#| label: inaug-great
+kwic(inaug_toks, "great") |> as.data.frame() |> count(docname) |> arrange(desc(n)) |> head(5)
+```
+
+## Cosine similarity
+
+```{r}
+#| label: inaug-simil
+sim_mat <- as.matrix(textstat_simil(inaug_dfm2, method = "cosine", margin = "documents"))
+round(sim_mat["2025-Trump", ], 2)
+
+diag(sim_mat) <- NA
+which(sim_mat == max(sim_mat, na.rm = TRUE), arr.ind = TRUE)
+sim_mat["1981-Reagan", "1985-Reagan"]
+```
+
+## Wordfish
+
+```{r}
+#| label: inaug-wordfish
+#| fig-height: 6
+#| fig-cap: "Wordfish positions of inaugural addresses (dir: 1945-Roosevelt left, 2025-Trump right)"
+wf <- textmodel_wordfish(inaug_dfm2, dir = c(1, 21))
+textplot_scale1d(wf)
+
+cor(wf$theta, docvars(inaug_dfm2, "Year"))
+
+words <- data.frame(word = wf$features, beta = wf$beta)
+head(words[order(words$beta), ], 10)
+head(words[order(words$beta, decreasing = TRUE), ], 10)
+```
+
+# Report
+
+**Three corpora, three data-generating processes.** No corpus here is simply "what people said." Each passed through a series of gates before it reached me, and each gate removed someone.
+
+| | Tweets (Part 1) | Presidential documents (Part 2) | Inaugural addresses (Part 3) |
+|---|---|---|---|
+| Who produced it | Twitter users | The president (often written by staff); recorded, annotated and indexed by Federal Register editors | Presidents and their speechwriters |
+| For whom | Followers and the online public, often just to express a view | A live audience and reporters; then the public record | The nation and the world, at a ceremony |
+| What selected it | Keywords, the summit window, and the original collector | My query and date range, plus the editor's index | Tradition (every inauguration), plus my 1945 cutoff |
+| Can it be collected again? | No: the API access is gone | Yes, if the query and date are recorded | Yes |
+| Claims it can support | Discussion among people who tweeted with these keywords during the summit | How presidents talked about Xi in public | How the ceremonial speech changes across speakers and time |
+
+**The public.** The summit tweets cannot speak for "the public." Only people who use Twitter, who tweet about politics, who used the collection keywords, and who did so in that week made it into the file. Retweets then amplify a few voices. Even the sentiment of these tweets is not fixed: four dictionaries scored the same tweets with very different spreads.
+
+**The government.** The presidential documents were selected by my query, but also by an editor. About two thirds of all mentions of "Xi Jinping" were written by the Federal Register's editors in notes and indexes, and about half of the documents entered the corpus only because the editor listed his name. Comparing full documents mostly separated the administrations by document type: Trump's documents carry more press questions ("q", "know", "going"), Biden's more formal announcements ("announced", "fact sheet"). Only the words around each mention showed how each president talked about Xi: Biden returns to a personal story (the hours they spent together, a trip to the Tibetan Plateau), while Trump mentions him in meetings and in answers to reporters. These are public statements, not private attitudes.
+
+**Inaugural addresses.** Keyness by party suggests Democrats speak of change and a new generation, Republicans of freedom, government and greatness. But party is the weakest signal. The most similar pair of addresses is Reagan's two (cosine `r round(sim_mat["1981-Reagan", "1985-Reagan"], 2)`), and Trump's 2025 address is closest to his own 2017 address. Similarity rises over time regardless of party: Biden's address is closer to Trump's than Eisenhower's is. Some "Republican" words are ceremony rather than ideology (thanking senators), and checking "great" with `kwic()` showed several Republican presidents use it, not only Trump.
+
+**What Wordfish measures.** Wordfish assumes each document sits at one position on a single latent dimension, and that how often each word appears depends on that position. It is unsupervised: it finds the main contrast in word use but does not name it. That is also why `dir` must be set: the model can identify the dimension only up to its direction, so I fixed 1945-Roosevelt on the left and 2025-Trump on the right. Three pieces of evidence suggest the dimension is time, not left–right ideology: the addresses line up roughly by year with parties mixed together; the positions correlate with year at `r round(cor(wf$theta, docvars(inaug_dfm2, "Year")), 2)`; and the words that pull documents to each end are early Cold War vocabulary (aided, scientific, Europe) versus issues of the 2025 address (Panama, emergency, prices). Even typography matters: curly apostrophes ("that’s") appear only in recent transcripts, so formatting choices enter the model too. To claim the dimension is ideology, I would need to validate it against an outside measure, such as party or roll-call positions, and it fails that test here.
+
+# Appendix: Use of AI tools
+
+- **Tools.** Claude (Anthropic), used through the Claude app during a working session.
+- **How.** Claude explained quanteda functions and the GovInfo API, proposed code for each step, and helped me interpret outputs by asking questions about what I saw. It drafted this page's code and an English draft of the report from my own observations and explanations, given in Chinese, which I then reviewed and edited. The interpretations (for example, that the CPD editor acts like a court historian, that each filter is a gate that removes people, and that party matters less than the speaker) came from my own analysis during the session.
+- **Why.** To learn the methods step by step, to debug code faster, and to write in English, which is not my first language.
